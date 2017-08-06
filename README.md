@@ -11,8 +11,9 @@
 - [ ] Descride logic and UI for camera vs selection and etc. Attach doc to project
 
 ## Grid
-- [ ] Fill level with hexagonal grid
+- [x] Fill level with hexagonal grid
 - [ ] Develop data structures for grid
+- [x] Make cell selectable by clicking
 
 ## Unit
 - [ ] Develop base unit model
