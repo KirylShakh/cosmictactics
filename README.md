@@ -10,8 +10,9 @@
 - [ ] Add hotkeys to control camera
 
 ## Grid
-- [ ] Fill level with hexagonal grid
+- [x] Fill level with hexagonal grid
 - [ ] Develop data structures for grid
+- [x] Make cell selectable by clicking
 
 ## Unit
 - [ ] Develop base unit model

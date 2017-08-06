@@ -41,19 +41,24 @@ public class Selector {
 
 	public void Update() {
 		if (Input.GetMouseButtonDown(0)) {
-            float timeDelta = Time.time - lastClickTime;
-
-            if (timeDelta < delta) {
-                Select();
-                lastClickTime = 0f;
-            }
-            else {
-                lastClickTime = Time.time;
-            }
+            Select();
+            CheckDoubleClick();
         }
 	}
 
-	private void Select() {
+    private void CheckDoubleClick() {
+        float timeDelta = Time.time - lastClickTime;
+
+        if (timeDelta < delta) {
+            Jump();
+            lastClickTime = 0f;
+        }
+        else {
+            lastClickTime = Time.time;
+        }
+    }
+
+	private void Jump() {
 		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
@@ -63,4 +68,17 @@ public class Selector {
             }
         }
 	}
+
+    private void Select() {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, maxDistance, LayerMask.GetMask("Floor"))) {
+            GameObject gridGameObject = GameObject.FindWithTag("HexGrid");
+            if (gridGameObject) {
+                HexGrid grid = gridGameObject.GetComponent<HexGrid>();
+                grid.SelectCell(new Point(hit.point.x, hit.point.z));
+            }
+        }
+    }
 }
