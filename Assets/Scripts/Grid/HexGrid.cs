@@ -9,8 +9,8 @@ public class HexGrid : MonoBehaviour {
     public HexCell hexCell;
 
     public Layout layout;
-    private IDictionary<string, HexCell> cells;
-    private HexCell selectedCell;
+    public IDictionary<string, HexCell> cells;
+    public HexCell selectedCell;
 
     // Use this for initialization
     void Start () {
