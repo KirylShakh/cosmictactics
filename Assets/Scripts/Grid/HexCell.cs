@@ -45,6 +45,11 @@ public class HexCell : MonoBehaviour {
         occupied = true;
     }
 
+    public void UnitLeaves() {
+        occupier = null;
+        occupied = false;
+    }
+
     private Hex ToHex() {
         Point point = new Point(transform.position.x, transform.position.z);
         return point.ToHex(gridLayout);

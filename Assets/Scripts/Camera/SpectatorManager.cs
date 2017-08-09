@@ -37,6 +37,9 @@ public class SpectatorManager : MonoBehaviour {
             Select();
             CheckDoubleClick();
         }
+        if (Input.GetButton("Fire2")) {
+            AttemptUnitMove();
+        }
 
         if (Input.GetKey("f")) {
             SpawnSphereUnit();
@@ -95,6 +98,18 @@ public class SpectatorManager : MonoBehaviour {
             Vector3 pos = grid.selectedCell.transform.position;
             Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + 0.5f, pos.z), Quaternion.identity);
             grid.selectedCell.Occupy(spawnedUnit);
+        }
+    }
+
+    private void AttemptUnitMove() {
+        HexGrid grid = FindGrid();
+        if (grid && grid.selectedCell && grid.selectedCell.occupied) {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+
+            if (Physics.Raycast(ray, out hit, controlDistance, LayerMask.GetMask("Floor"))) {
+                grid.MoveSelectedUnitTo(new Point(hit.point.x, hit.point.z));
+            }
         }
     }
 

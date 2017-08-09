@@ -5,12 +5,17 @@ using UnityEngine;
 public class Unit : MonoBehaviour {
 
 	// Use this for initialization
-	void Start () {
+	void Start() {
 		
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void Update() {
 		
 	}
+
+    public void MoveTo(HexCell cell) {
+        Vector3 cellPos = cell.transform.position;
+        transform.position = new Vector3(cellPos.x, cellPos.y + 0.5f, cellPos.z);
+    }
 }

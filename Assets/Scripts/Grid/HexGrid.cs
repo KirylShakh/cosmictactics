@@ -26,17 +26,37 @@ public class HexGrid : MonoBehaviour {
     }
 
     public void SelectCell(Point p) {
+        SelectCell(FindCell(p));
+    }
+
+    public void SelectCell(HexCell cell) {
         if (selectedCell) {
             selectedCell.Unselect();
         }
 
-        Hex hex = p.ToHex(layout);
-
-        HexCell cell = cells[hex.ToString()];
         if (cell) {
             cell.Select();
             selectedCell = cell;
         }
+    }
+
+    public HexCell FindCell(Point p) {
+        Hex hex = p.ToHex(layout);
+        return cells[hex.ToString()];
+    }
+
+    public void MoveSelectedUnitTo(Point p) {
+        HexCell destination = FindCell(p);
+        if (!destination || destination.occupied) {
+            return;
+        }
+
+        Unit unit = selectedCell.occupier;
+        unit.MoveTo(destination);
+
+        selectedCell.UnitLeaves();
+        destination.Occupy(unit);
+        SelectCell(destination);
     }
 
     private void Generate() {
