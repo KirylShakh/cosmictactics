@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour {
 
+    public float centerHeight = 0.5f;
+
 	// Use this for initialization
 	void Start() {
 		
@@ -16,6 +18,6 @@ public class Unit : MonoBehaviour {
 
     public void MoveTo(HexCell cell) {
         Vector3 cellPos = cell.transform.position;
-        transform.position = new Vector3(cellPos.x, cellPos.y + 0.5f, cellPos.z);
+        transform.position = new Vector3(cellPos.x, cellPos.y + centerHeight, cellPos.z);
     }
 }

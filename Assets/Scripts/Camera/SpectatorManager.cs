@@ -76,7 +76,9 @@ public class SpectatorManager : MonoBehaviour {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, controlDistance, LayerMask.GetMask("Floor"))) {
+        if ((Physics.Raycast(ray, out hit, controlDistance) && hit.transform.gameObject.CompareTag("Unit")) ||
+            (Physics.Raycast(ray, out hit, controlDistance, LayerMask.GetMask("Floor")))) {
+
             HexGrid grid = FindGrid();
             if (grid) {
                 grid.SelectCell(new Point(hit.point.x, hit.point.z));
