@@ -11,6 +11,7 @@ public class HexGrid : MonoBehaviour {
     public Layout layout;
     public IDictionary<string, HexCell> cells;
     public HexCell selectedCell;
+    public HexCell highlightedCell;
 
     // Use this for initialization
     void Start () {
@@ -23,6 +24,21 @@ public class HexGrid : MonoBehaviour {
     // Update is called once per frame
     void Update () {
         	
+    }
+
+    public void HighlightCell(Point p) {
+        HighlightCell(FindCell(p));
+    }
+
+    public void HighlightCell(HexCell cell) {
+        if (highlightedCell) {
+            highlightedCell.ClearHighlighting(highlightedCell.Equals(selectedCell));
+        }
+
+        if (cell) {
+            cell.Highlight();
+            highlightedCell = cell;
+        }
     }
 
     public void SelectCell(Point p) {
@@ -40,11 +56,6 @@ public class HexGrid : MonoBehaviour {
         }
     }
 
-    public HexCell FindCell(Point p) {
-        Hex hex = p.ToHex(layout);
-        return cells[hex.ToString()];
-    }
-
     public void MoveSelectedUnitTo(Point p) {
         HexCell destination = FindCell(p);
         if (!destination || destination.occupied) {
@@ -57,6 +68,11 @@ public class HexGrid : MonoBehaviour {
         selectedCell.UnitLeaves();
         destination.Occupy(unit);
         SelectCell(destination);
+    }
+
+    private HexCell FindCell(Point p) {
+        Hex hex = p.ToHex(layout);
+        return cells.ContainsKey(hex.ToString()) ? cells[hex.ToString()] : null;
     }
 
     private void Generate() {

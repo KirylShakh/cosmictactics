@@ -30,6 +30,20 @@ public class HexCell : MonoBehaviour {
 
     }
 
+    public void Highlight() {
+        lr.material.color = Color.cyan;
+        lr.widthMultiplier = defaultWidth * 2.5f;
+    }
+
+    public void ClearHighlighting(bool selected = false) {
+        if (selected) {
+            Select();
+        }
+        else {
+            Unselect();
+        }
+    }
+
     public void Select() {
         lr.material.color = Color.green;
         lr.widthMultiplier = defaultWidth * 2;

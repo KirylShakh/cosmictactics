@@ -33,6 +33,8 @@ public class SpectatorManager : MonoBehaviour {
     private void HandleInput() {
         velocity = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized * speed;
 
+        HandleHighlighting();
+
         if (Input.GetMouseButtonDown(0)) {
             Select();
             CheckDoubleClick();
@@ -46,6 +48,20 @@ public class SpectatorManager : MonoBehaviour {
         }
         else if (Input.GetKey("g")) {
             SpawnCubeUnit();
+        }
+    }
+
+    private void HandleHighlighting() {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
+
+        if ((Physics.Raycast(ray, out hit, controlDistance) && hit.transform.gameObject.CompareTag("Unit")) ||
+            (Physics.Raycast(ray, out hit, controlDistance, LayerMask.GetMask("Floor")))) {
+
+            HexGrid grid = FindGrid();
+            if (grid) {
+                grid.HighlightCell(new Point(hit.point.x, hit.point.z));
+            }
         }
     }
 
