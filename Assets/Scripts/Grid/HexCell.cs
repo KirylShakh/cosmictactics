@@ -7,10 +7,13 @@ public class HexCell : MonoBehaviour {
     public Layout gridLayout;
     public float floorY = 0.1f;
 
+    public bool occupied = false;
+    public Unit occupier;
+
     private LineRenderer lr;
     private Color defaultLRColor;
-    private float defaultWidth; 
-
+    private float defaultWidth;
+    
     // Use this for initialization
     void Start () {
         lr = GetComponent<LineRenderer>();
@@ -27,6 +30,20 @@ public class HexCell : MonoBehaviour {
 
     }
 
+    public void Highlight() {
+        lr.material.color = Color.cyan;
+        lr.widthMultiplier = defaultWidth * 2.5f;
+    }
+
+    public void ClearHighlighting(bool selected = false) {
+        if (selected) {
+            Select();
+        }
+        else {
+            Unselect();
+        }
+    }
+
     public void Select() {
         lr.material.color = Color.green;
         lr.widthMultiplier = defaultWidth * 2;
@@ -35,6 +52,16 @@ public class HexCell : MonoBehaviour {
     public void Unselect() {
         lr.material.color = defaultLRColor;
         lr.widthMultiplier = defaultWidth;
+    }
+
+    public void Occupy(Unit unit) {
+        occupier = unit;
+        occupied = true;
+    }
+
+    public void UnitLeaves() {
+        occupier = null;
+        occupied = false;
     }
 
     private Hex ToHex() {

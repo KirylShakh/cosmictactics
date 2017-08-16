@@ -9,8 +9,9 @@ public class HexGrid : MonoBehaviour {
     public HexCell hexCell;
 
     public Layout layout;
-    private IDictionary<string, HexCell> cells;
-    private HexCell selectedCell;
+    public IDictionary<string, HexCell> cells;
+    public HexCell selectedCell;
+    public HexCell highlightedCell;
 
     // Use this for initialization
     void Start () {
@@ -25,18 +26,53 @@ public class HexGrid : MonoBehaviour {
         	
     }
 
+    public void HighlightCell(Point p) {
+        HighlightCell(FindCell(p));
+    }
+
+    public void HighlightCell(HexCell cell) {
+        if (highlightedCell) {
+            highlightedCell.ClearHighlighting(highlightedCell.Equals(selectedCell));
+        }
+
+        if (cell) {
+            cell.Highlight();
+            highlightedCell = cell;
+        }
+    }
+
     public void SelectCell(Point p) {
+        SelectCell(FindCell(p));
+    }
+
+    public void SelectCell(HexCell cell) {
         if (selectedCell) {
             selectedCell.Unselect();
         }
 
-        Hex hex = p.ToHex(layout);
-
-        HexCell cell = cells[hex.ToString()];
         if (cell) {
             cell.Select();
             selectedCell = cell;
         }
+    }
+
+    public void MoveSelectedUnitTo(Point p) {
+        HexCell destination = FindCell(p);
+        if (!destination || destination.occupied) {
+            return;
+        }
+
+        Unit unit = selectedCell.occupier;
+        unit.MoveTo(destination);
+
+        selectedCell.UnitLeaves();
+        destination.Occupy(unit);
+        SelectCell(destination);
+    }
+
+    private HexCell FindCell(Point p) {
+        Hex hex = p.ToHex(layout);
+        return cells.ContainsKey(hex.ToString()) ? cells[hex.ToString()] : null;
     }
 
     private void Generate() {
