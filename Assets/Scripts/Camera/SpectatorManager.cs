@@ -9,6 +9,7 @@ public class SpectatorManager : MonoBehaviour {
 
     public Unit sphereUnit;
     public Unit cubeUnit;
+    public Unit sphericalFlyerUnit;
 
     private Rigidbody rb;
 	private Vector3 velocity;
@@ -44,10 +45,13 @@ public class SpectatorManager : MonoBehaviour {
         }
 
         if (Input.GetKey("f")) {
-            SpawnSphereUnit();
+            SpawnUnit(sphereUnit);
         }
         else if (Input.GetKey("g")) {
-            SpawnCubeUnit();
+            SpawnUnit(cubeUnit);
+        }
+        else if (Input.GetKey("v")) {
+            SpawnUnit(sphericalFlyerUnit);
         }
     }
 
@@ -102,19 +106,11 @@ public class SpectatorManager : MonoBehaviour {
         }
     }
 
-    private void SpawnSphereUnit() {
-        SpawnUnit(sphereUnit);
-    }
-
-    private void SpawnCubeUnit() {
-        SpawnUnit(cubeUnit);
-    }
-
     private void SpawnUnit(Unit unit) {
         HexGrid grid = FindGrid();
         if (grid && grid.selectedCell && !grid.selectedCell.occupied) {
             Vector3 pos = grid.selectedCell.transform.position;
-            Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + 0.5f, pos.z), Quaternion.identity);
+            Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
             grid.selectedCell.Occupy(spawnedUnit);
         }
     }

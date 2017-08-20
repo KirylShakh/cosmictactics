@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Unit : MonoBehaviour {
+abstract public class Unit : MonoBehaviour {
 
-    public float centerHeight = 0.5f;
+    abstract public float centerHeight { get; }
 
 	// Use this for initialization
 	void Start() {
