@@ -20,4 +20,8 @@ abstract public class Unit : MonoBehaviour {
         Vector3 cellPos = cell.transform.position;
         transform.position = new Vector3(cellPos.x, cellPos.y + centerHeight, cellPos.z);
     }
+
+    public virtual void ActOn(Unit unit) {
+        Destroy(unit.gameObject, 0.0f);
+    }
 }

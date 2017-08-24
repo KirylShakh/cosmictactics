@@ -64,9 +64,19 @@ public class HexCell : MonoBehaviour {
         occupied = false;
     }
 
+    public void ResolveActBy(Unit unit) {
+        if (occupied && occupier != unit) {
+            unit.ActOn(occupier);
+            UnitLeaves();
+        }
+    }
+
+    public Point ToPoint() {
+        return new Point(transform.position.x, transform.position.z);
+    }
+
     private Hex ToHex() {
-        Point point = new Point(transform.position.x, transform.position.z);
-        return point.ToHex(gridLayout);
+        return ToPoint().ToHex(gridLayout);
     }
 
     private List<Vector3> HexCornerVertices() {
