@@ -9,6 +9,7 @@ public class SpectatorManager : MonoBehaviour {
 
     public Unit sphereUnit;
     public Unit cubeUnit;
+    public Unit sphericalFlyerUnit;
 
     private Rigidbody rb;
 	private Vector3 velocity;
@@ -33,25 +34,30 @@ public class SpectatorManager : MonoBehaviour {
     private void HandleInput() {
         velocity = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized * speed;
 
-        HandleHighlighting();
+        HexGrid grid = FindGrid();
+        HexCell highlightedCell = FindHighlightedCell();
+        HandleHighlighting(grid, highlightedCell);
 
         if (Input.GetMouseButtonDown(0)) {
-            Select();
+            Select(grid, highlightedCell);
             CheckDoubleClick();
         }
-        if (Input.GetButton("Fire2")) {
-            AttemptUnitMove();
+        else if (Input.GetButton("Fire2")) {
+            Act(grid, highlightedCell);
         }
 
         if (Input.GetKey("f")) {
-            SpawnSphereUnit();
+            SpawnUnit(sphereUnit);
         }
         else if (Input.GetKey("g")) {
-            SpawnCubeUnit();
+            SpawnUnit(cubeUnit);
+        }
+        else if (Input.GetKey("v")) {
+            SpawnUnit(sphericalFlyerUnit);
         }
     }
 
-    private void HandleHighlighting() {
+    private HexCell FindHighlightedCell() {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
@@ -60,8 +66,16 @@ public class SpectatorManager : MonoBehaviour {
 
             HexGrid grid = FindGrid();
             if (grid) {
-                grid.HighlightCell(new Point(hit.point.x, hit.point.z));
+                return grid.FindCell(new Point(hit.point.x, hit.point.z));
             }
+        }
+
+        return null;
+    }
+
+    private void HandleHighlighting(HexGrid grid, HexCell cell) {
+        if (cell) {
+            grid.HighlightCell(cell);
         }
     }
 
@@ -88,45 +102,28 @@ public class SpectatorManager : MonoBehaviour {
         }
 	}
 
-    private void Select() {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-
-        if ((Physics.Raycast(ray, out hit, controlDistance) && hit.transform.gameObject.CompareTag("Unit")) ||
-            (Physics.Raycast(ray, out hit, controlDistance, LayerMask.GetMask("Floor")))) {
-
-            HexGrid grid = FindGrid();
-            if (grid) {
-                grid.SelectCell(new Point(hit.point.x, hit.point.z));
-            }
+    private void Select(HexGrid grid, HexCell cell) {
+        if (cell) {
+            grid.SelectCell(cell);
         }
-    }
-
-    private void SpawnSphereUnit() {
-        SpawnUnit(sphereUnit);
-    }
-
-    private void SpawnCubeUnit() {
-        SpawnUnit(cubeUnit);
     }
 
     private void SpawnUnit(Unit unit) {
         HexGrid grid = FindGrid();
         if (grid && grid.selectedCell && !grid.selectedCell.occupied) {
             Vector3 pos = grid.selectedCell.transform.position;
-            Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + 0.5f, pos.z), Quaternion.identity);
+            Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
             grid.selectedCell.Occupy(spawnedUnit);
         }
     }
 
-    private void AttemptUnitMove() {
-        HexGrid grid = FindGrid();
+    private void Act(HexGrid grid, HexCell targetCell) {
         if (grid && grid.selectedCell && grid.selectedCell.occupied) {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, controlDistance, LayerMask.GetMask("Floor"))) {
-                grid.MoveSelectedUnitTo(new Point(hit.point.x, hit.point.z));
+            if (targetCell) {
+                if (targetCell.occupied) {
+                    targetCell.ResolveActBy(grid.selectedCell.occupier);
+                }
+                grid.MoveSelectedUnitTo(targetCell);
             }
         }
     }

@@ -17,7 +17,7 @@
 
 ## Unit
 - [x] Spawn units inside grid
-- [ ] Fix incorrect hex selection when selecting unit by double click
+- [x] Fix incorrect hex selection when selecting unit by double click
 - [ ] Develop base unit model
 - [ ] Develop base unit class
 - [ ] Make unit selectable
@@ -25,3 +25,4 @@
 - [ ] Add stats to unit
 
 ## Combat
+- [x] Add base destroy action

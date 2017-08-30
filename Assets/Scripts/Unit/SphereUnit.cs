@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class SphereUnit : Unit {
 
+    public override float centerHeight {
+        get { return 0.5f; }
+    }
+
 	// Use this for initialization
 	void Start () {
 		

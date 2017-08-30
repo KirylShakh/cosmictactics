@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CubeUnit : Unit {
+public class SphericalFlyerUnit : Unit {
 
     public override float centerHeight {
-        get { return 0.5f; }
+        get { return 2.5f; }
     }
 
     // Use this for initialization

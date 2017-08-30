@@ -56,8 +56,7 @@ public class HexGrid : MonoBehaviour {
         }
     }
 
-    public void MoveSelectedUnitTo(Point p) {
-        HexCell destination = FindCell(p);
+    public void MoveSelectedUnitTo(HexCell destination) {
         if (!destination || destination.occupied) {
             return;
         }
@@ -70,7 +69,11 @@ public class HexGrid : MonoBehaviour {
         SelectCell(destination);
     }
 
-    private HexCell FindCell(Point p) {
+    public void MoveSelectedUnitTo(Point p) {
+        MoveSelectedUnitTo(FindCell(p));
+    }
+
+    public HexCell FindCell(Point p) {
         Hex hex = p.ToHex(layout);
         return cells.ContainsKey(hex.ToString()) ? cells[hex.ToString()] : null;
     }
