@@ -74,7 +74,7 @@ public class HexCell : MonoBehaviour {
     }
 
     public void ResolveActBy(Unit unit) {
-        if (occupied && occupier != unit) {
+        if (occupied && occupier != unit && !occupier.isMoving) {
             unit.ActOn(occupier);
             UnitLeaves();
         }

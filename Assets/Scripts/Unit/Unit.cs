@@ -48,8 +48,10 @@ abstract public class Unit : MonoBehaviour {
         movePath = path;
         pathCellIndex = 1;
 
+        foreach (HexCell step in path) {
+            step.Occupy(this);
+        }
         movePath[0].UnitLeaves();
-        movePath[pathCellIndex].Occupy(this);
     }
 
     protected void RecalculateMovement() {
@@ -62,7 +64,6 @@ abstract public class Unit : MonoBehaviour {
                 if (isNearCell(movePath[pathCellIndex])) {
                     movePath[pathCellIndex].UnitLeaves();
                     pathCellIndex++;
-                    movePath[pathCellIndex].Occupy(this);
                 }
 
                 velocity = DirectionTo(movePath[pathCellIndex]).normalized * velocityMultiplier;

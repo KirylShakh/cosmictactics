@@ -2,6 +2,9 @@
 
 ## General
 - [x] Set up project
+- [ ] Extract movement code to Movement script
+- [ ] Refactor grid and cell
+- [ ] Rewrite Priority Queue to Heap
 
 ## Camera
 - [x] Set up initial camera controls
@@ -21,8 +24,10 @@
 - [ ] Develop base unit model
 - [ ] Develop base unit class
 - [ ] Make unit selectable
-- [ ] Control its movement inside grid
+- [x] Control its movement inside grid
 - [ ] Add stats to unit
+- [x] Fix concurrent units movement
+- [ ] Highlight pathes
 
 ## Combat
 - [x] Add base destroy action

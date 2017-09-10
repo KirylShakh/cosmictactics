@@ -114,6 +114,7 @@ public class SpectatorManager : MonoBehaviour {
             Vector3 pos = grid.selectedCell.transform.position;
             Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
             grid.selectedCell.Occupy(spawnedUnit);
+            grid.selectedCell.occupier.ShowStats();
         }
     }
 
