@@ -6,6 +6,9 @@ public class HexCell : MonoBehaviour {
 
     public Layout gridLayout;
     public float floorY = 0.1f;
+    public Point point;
+    public Hex hex;
+    public float cost = 1.0f;
 
     public bool occupied = false;
     public Unit occupier;
@@ -28,6 +31,12 @@ public class HexCell : MonoBehaviour {
     // Update is called once per frame
     void Update () {
 
+    }
+
+    public void Init(Layout l, Point p, Hex h) {
+        gridLayout = l;
+        point = p;
+        hex = h;
     }
 
     public void Highlight() {
@@ -71,18 +80,10 @@ public class HexCell : MonoBehaviour {
         }
     }
 
-    public Point ToPoint() {
-        return new Point(transform.position.x, transform.position.z);
-    }
-
-    private Hex ToHex() {
-        return ToPoint().ToHex(gridLayout);
-    }
-
     private List<Vector3> HexCornerVertices() {
         List<Vector3> vertices = new List<Vector3>();
 
-        Point[] corners = gridLayout.PolygonCorners(ToHex());
+        Point[] corners = gridLayout.PolygonCorners(hex);
         for (int i = 0; i < corners.Length; i++) {
             vertices.Add(new Vector3(corners[i].x, floorY, corners[i].y));
         }

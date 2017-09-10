@@ -74,7 +74,7 @@ public class SpectatorManager : MonoBehaviour {
     }
 
     private void HandleHighlighting(HexGrid grid, HexCell cell) {
-        if (cell) {
+        if (cell && grid.highlightedCell != cell) {
             grid.HighlightCell(cell);
         }
     }
@@ -103,7 +103,7 @@ public class SpectatorManager : MonoBehaviour {
 	}
 
     private void Select(HexGrid grid, HexCell cell) {
-        if (cell) {
+        if (cell && grid.selectedCell != cell) {
             grid.SelectCell(cell);
         }
     }

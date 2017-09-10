@@ -12,13 +12,12 @@ public class SphereUnit : Unit {
         get { return "Sphere Name"; }
     }
 
-    // Use this for initialization
     void Start () {
-		
-	}
+        rb = GetComponent<Rigidbody>();
+    }
 	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+    // Update is called once per frame
+    protected void Update () {
+        RecalculateMovement();
+    }
 }

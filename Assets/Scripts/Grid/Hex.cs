@@ -55,6 +55,8 @@ public class Hex {
     }
 
     public static bool operator ==(Hex a, Hex b) {
+        if ((object)a == null && (object)b == null) return true;
+        if ((object)a == null || (object)b == null) return false;
         return (a.q == b.q) && (a.r == b.r) && (a.s == b.s);
     }
 
@@ -115,10 +117,18 @@ public class Hex {
         if (q + r + s != 0) Debug.Log(string.Format("Invalid {0}", this));
     }
 
-    /*
-     // Starting from 'tr' clockwise
-     directions = new Hex[6] { new Hex(1, 0, -1), new Hex(1, -1, 0), new Hex(0, -1, 1), new Hex(-1, 0, 1), new Hex(-1, 1, 0), new Hex(0, 1, -1) };
+    // Starting from 'tr' clockwise
+    static public Hex[] directions = new Hex[6] { new Hex(1, 0, -1), new Hex(1, -1, 0), new Hex(0, -1, 1), new Hex(-1, 0, 1), new Hex(-1, 1, 0), new Hex(0, 1, -1) };
 
+    public Hex[] Neighbours() {
+        Hex[] neighbours = new Hex[6];
+        for (int i = 0; i < 6; i++) {
+            neighbours[i] = this + Hex.directions[i];
+        }
+        return neighbours;
+    }
+
+    /*
      public Hex Direction(int direction) {
         int normalized = (6 + (direction % 6)) % 6;
         
