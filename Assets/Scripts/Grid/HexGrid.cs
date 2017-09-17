@@ -48,11 +48,18 @@ public class HexGrid : MonoBehaviour {
     public void SelectCell(HexCell cell) {
         if (selectedCell) {
             selectedCell.Unselect();
+            if (selectedCell.occupied) {
+                selectedCell.occupier.HideStats();
+            }
+
         }
 
         if (cell) {
             cell.Select();
             selectedCell = cell;
+            if (selectedCell.occupied) {
+                selectedCell.occupier.ShowStats();
+            }
         }
     }
 

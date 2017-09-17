@@ -8,6 +8,10 @@ public class SphericalFlyerUnit : Unit {
         get { return 2.5f; }
     }
 
+    public override string Name {
+        get { return "SphericalFlyerUnit Name"; }
+    }
+
     // Use this for initialization
     void Start () {
 		

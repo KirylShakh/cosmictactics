@@ -8,6 +8,10 @@ public class CubeUnit : Unit {
         get { return 0.5f; }
     }
 
+    public override string Name {
+        get { return "Cube Name"; }
+    }
+
     // Use this for initialization
     void Start () {
 		

@@ -8,8 +8,12 @@ public class SphereUnit : Unit {
         get { return 0.5f; }
     }
 
-	// Use this for initialization
-	void Start () {
+    public override string Name {
+        get { return "Sphere Name"; }
+    }
+
+    // Use this for initialization
+    void Start () {
 		
 	}
 	
