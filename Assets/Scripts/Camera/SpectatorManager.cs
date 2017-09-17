@@ -74,7 +74,7 @@ public class SpectatorManager : MonoBehaviour {
     }
 
     private void HandleHighlighting(HexGrid grid, HexCell cell) {
-        if (cell) {
+        if (cell && grid.highlightedCell != cell) {
             grid.HighlightCell(cell);
         }
     }
@@ -103,17 +103,15 @@ public class SpectatorManager : MonoBehaviour {
 	}
 
     private void Select(HexGrid grid, HexCell cell) {
-        if (cell) {
+        if (cell && grid.selectedCell != cell) {
             grid.SelectCell(cell);
         }
     }
 
     private void SpawnUnit(Unit unit) {
         HexGrid grid = FindGrid();
-        if (grid && grid.selectedCell && !grid.selectedCell.occupied) {
-            Vector3 pos = grid.selectedCell.transform.position;
-            Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
-            grid.selectedCell.Occupy(spawnedUnit);
+        if (grid) {
+            grid.Spawn(unit);
         }
     }
 

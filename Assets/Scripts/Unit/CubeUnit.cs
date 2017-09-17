@@ -14,11 +14,11 @@ public class CubeUnit : Unit {
 
     // Use this for initialization
     void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
+        rb = GetComponent<Rigidbody>();
+    }
+
+    // Update is called once per frame
+    protected void Update () {
+        RecalculateMovement();
 	}
 }

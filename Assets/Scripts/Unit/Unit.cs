@@ -9,15 +9,30 @@ abstract public class Unit : MonoBehaviour {
     abstract public float centerHeight { get; }
     private Text statsComponent;
 
-	// Use this for initialization
-	void Start() {
+    public bool isMoving = false;
+    public float velocityMultiplier = 10.0f;
+    private Vector3 velocity;
+    private List<HexCell> movePath;
+    private int pathCellIndex = 0;
+    private float movePrecision = 0.2f;
+
+    protected Rigidbody rb;
+
+    // Use this for initialization
+    void Start() {
+
+	}
+
+    // Update is called once per frame
+    void Update() {
 		
 	}
-	
-	// Update is called once per frame
-	void Update() {
-		
-	}
+
+    protected void FixedUpdate() {
+        if (isMoving) {
+            rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
+        }
+    }
 
     public void MoveTo(HexCell cell) {
         Vector3 cellPos = cell.transform.position;
@@ -28,10 +43,46 @@ abstract public class Unit : MonoBehaviour {
         Destroy(unit.gameObject, 0.0f);
     }
 
+    public virtual void MoveAlong(List<HexCell> path) {
+        isMoving = true;
+        movePath = path;
+        pathCellIndex = 1;
+
+        foreach (HexCell step in path) {
+            step.Occupy(this);
+        }
+        movePath[0].UnitLeaves();
+    }
+
+    protected void RecalculateMovement() {
+        if (isMoving) {
+            if ((pathCellIndex >= movePath.Count - 1) && isNearCell(movePath[pathCellIndex])) {
+                MoveTo(movePath[pathCellIndex]);
+                isMoving = false;
+            }
+            else {
+                if (isNearCell(movePath[pathCellIndex])) {
+                    movePath[pathCellIndex].UnitLeaves();
+                    pathCellIndex++;
+                }
+
+                velocity = DirectionTo(movePath[pathCellIndex]).normalized * velocityMultiplier;
+            }
+        }
+    }
+
+    protected Vector3 DirectionTo(HexCell cell) {
+        Vector3 hexedPosition = new Vector3(transform.position.x, transform.position.y - centerHeight, transform.position.z);
+        return cell.transform.position - hexedPosition;
+    }
+
+    protected bool isNearCell(HexCell cell) {
+        return DirectionTo(cell).magnitude <= movePrecision;
+    }
+
     public void ShowStats() {
         Text stats = FindStatsComponent();
-        if (stats)
-        { 
+        if (stats) { 
             stats.text = Name;
             stats.enabled = true;
         }
@@ -40,18 +91,15 @@ abstract public class Unit : MonoBehaviour {
 
     public void HideStats() {
         Text stats = FindStatsComponent();
-        if (stats)
-        {
+        if (stats) {
             stats.enabled = false;
         }
     }
 
     private Text FindStatsComponent() {
-        if (!statsComponent)
-        {
+        if (!statsComponent) {
             GameObject stats = GameObject.FindGameObjectWithTag("Name text");
-            if (stats)
-            {
+            if (stats) {
                 statsComponent = stats.GetComponent<Text>();
             }
         }
