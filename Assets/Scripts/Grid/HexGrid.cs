@@ -13,17 +13,19 @@ public class HexGrid : MonoBehaviour {
     public HexCell selectedCell;
     public HexCell highlightedCell;
 
+    private List<HexCell> highlightedPath = new List<HexCell>();
+
     // Use this for initialization
-    void Start () {
+    void Start() {
         layout = new Layout(true, new Point(1f, 1f), new Point(0f, 0f));
         cells = new Dictionary<string, HexCell>();
 
         Generate();
     }
-	
+
     // Update is called once per frame
-    void Update () {
-        	
+    void Update() {
+
     }
 
     public void HighlightCell(Point p) {
@@ -31,14 +33,22 @@ public class HexGrid : MonoBehaviour {
     }
 
     public void HighlightCell(HexCell cell) {
-        if (highlightedCell) {
-            highlightedCell.ClearHighlighting(highlightedCell.Equals(selectedCell));
+        if (!cell) {
+            return;
+        }
+        ClearHighlighting();
+
+        if (selectedCell && selectedCell.occupied && !cell.occupied) {
+            highlightedPath = FindPath(selectedCell, cell);
+            foreach (HexCell pathCell in highlightedPath) {
+                pathCell.Highlight();
+            }
+        }
+        else {
+            cell.Highlight();
         }
 
-        if (cell) {
-            cell.Highlight();
-            highlightedCell = cell;
-        }
+        highlightedCell = cell;
     }
 
     public void SelectCell(Point p) {
@@ -46,6 +56,8 @@ public class HexGrid : MonoBehaviour {
     }
 
     public void SelectCell(HexCell cell) {
+        ClearHighlighting();
+
         if (selectedCell) {
             selectedCell.Unselect();
             if (selectedCell.occupied) {
@@ -56,6 +68,8 @@ public class HexGrid : MonoBehaviour {
 
         if (cell) {
             cell.Select();
+
+            highlightedPath.Clear();
             selectedCell = cell;
             if (selectedCell.occupied) {
                 selectedCell.occupier.ShowStats();
@@ -68,7 +82,14 @@ public class HexGrid : MonoBehaviour {
             return;
         }
 
-        List<HexCell> path = FindPath(selectedCell, destination);
+        List<HexCell> path;
+        if (highlightedPath.Count < 2 || highlightedPath[highlightedPath.Count - 1] != destination) {
+            path = FindPath(selectedCell, destination);
+        }
+        else {
+            path = new List<HexCell>(highlightedPath.ToArray());
+        }
+
         if (path.Count >= 2) {
             selectedCell.occupier.MoveAlong(path);
         }
@@ -148,6 +169,37 @@ public class HexGrid : MonoBehaviour {
                 cell.Init(layout, p, hex);
 
                 cells.Add(hex.ToString(), cell);
+            }
+        }
+    }
+
+    private void ClearHighlighting() {
+        foreach (HexCell pathCell in highlightedPath) {
+            pathCell.ClearHighlighting(false);
+        }
+        if (highlightedPath.Count > 0 && highlightedPath[0].Equals(selectedCell)) {
+            selectedCell.Select();
+        }
+
+        if (highlightedCell) {
+            highlightedCell.ClearHighlighting(highlightedCell.Equals(selectedCell));
+        }
+    }
+
+    public bool CanSpawn() {
+        return selectedCell && !selectedCell.occupied;
+    }
+
+    public void Spawn(Unit unit) {
+        if (CanSpawn()) {
+            Vector3 pos = selectedCell.transform.position;
+            Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
+            selectedCell.Occupy(spawnedUnit);
+            selectedCell.occupier.ShowStats();
+
+            ClearHighlighting();
+            if (highlightedCell) {
+                HighlightCell(highlightedCell);
             }
         }
     }
