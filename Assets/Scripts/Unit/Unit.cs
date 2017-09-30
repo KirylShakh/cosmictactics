@@ -54,6 +54,14 @@ abstract public class Unit : MonoBehaviour {
         movePath[0].UnitLeaves();
     }
 
+    public virtual void RoundEnds() {
+
+    }
+
+    public virtual void RoundStarts() {
+
+    }
+
     protected void RecalculateMovement() {
         if (isMoving) {
             if ((pathCellIndex >= movePath.Count - 1) && isNearCell(movePath[pathCellIndex])) {

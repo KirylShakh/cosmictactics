@@ -5,6 +5,7 @@
 - [ ] Extract movement code to Movement script
 - [ ] Refactor grid and cell
 - [ ] Rewrite Priority Queue to Heap
+- [x] Make base round switching logic
 
 ## Camera
 - [x] Set up initial camera controls

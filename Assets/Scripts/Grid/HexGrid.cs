@@ -173,7 +173,7 @@ public class HexGrid : MonoBehaviour {
         }
     }
 
-    private void ClearHighlighting() {
+    public void ClearHighlighting() {
         foreach (HexCell pathCell in highlightedPath) {
             pathCell.ClearHighlighting(false);
         }
