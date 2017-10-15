@@ -10,20 +10,28 @@ public class GameManager : MonoBehaviour {
     public Unit cubeUnit;
     public Unit sphericalFlyerUnit;
 
+    public Material[] teamMaterials;
+
     public float controlDistance = 100f;
     public float switchingRoundsDelay = 2.0f;
 
     private HexGrid hexGrid;
-    private List<Unit> units;
+    private List<Unit> units1;
+    private Units units;
     private int round;
     private bool switchingRounds;
     private float switchingRoundsDeltaTime;
 
+    private int[] teams = { 0, 1 };
+    private int[] initiatives = { 0, 1, 2 };
+
     // Use this for initialization
     void Start() {
-        units = new List<Unit>();
+        units1 = new List<Unit>();
+
+        units = new Units();
         round = 0;
-        EndRound();
+        PlayRoundZero();
     }
 	
     // Update is called once per frame
@@ -92,10 +100,27 @@ public class GameManager : MonoBehaviour {
         }
     }
 
-    private void SpawnUnit(Unit unit) {
+    private void SpawnUnit(Unit unitClass, int team = 0) {
         HexGrid grid = FindGrid();
         if (grid) {
-            grid.Spawn(unit);
+            Unit unit = grid.Spawn(unitClass);
+
+            if (unit) {
+                units.Add(team, unit);
+                unit.SetTeam(team, teamMaterials[team]);
+            }
+        }
+    }
+
+    private void SpawnUnitAt(Unit unitClass, Hex hex, int team = 0) {
+        HexGrid grid = FindGrid();
+        if (grid) {
+            Unit unit = grid.SpawnAt(unitClass, hex);
+
+            if (unit) {
+                units.Add(team, unit);
+                unit.SetTeam(team, teamMaterials[team]);
+            }
         }
     }
 
@@ -126,10 +151,24 @@ public class GameManager : MonoBehaviour {
         }
     }
 
+    private void PlayRoundZero() {
+        // spawn blue team
+        SpawnUnitAt(sphereUnit, new Hex(-3, 0), 0);
+        SpawnUnitAt(sphericalFlyerUnit, new Hex(-3, 2), 0);
+        SpawnUnitAt(cubeUnit, new Hex(-5, 2), 0);
+
+        // spawn red team
+        SpawnUnitAt(sphereUnit, new Hex(3, 0), 1);
+        SpawnUnitAt(sphericalFlyerUnit, new Hex(3, 2), 1);
+        SpawnUnitAt(cubeUnit, new Hex(5, 2), 1);
+
+        EndRound();
+    }
+
     private void EndRound() {
         switchingRounds = true;
 
-        foreach (Unit unit in units) {
+        foreach (Unit unit in units1) {
             unit.RoundEnds();
         }
 
@@ -141,11 +180,35 @@ public class GameManager : MonoBehaviour {
     }
 
     private void StartRound() {
-        foreach (Unit unit in units) {
+        foreach (Unit unit in units1) {
             unit.RoundStarts();
         }
 
         roundText.enabled = false;
         switchingRounds = false;
+    }
+}
+
+public class Units {
+
+    private IDictionary<int, IDictionary<int, List<Unit> > > units;
+
+    public Units() {
+        units = new Dictionary<int, IDictionary<int, List<Unit> > >();
+    }
+
+    public void Add(int team, Unit unit) {
+        if (!units.ContainsKey(team)) {
+            units.Add(team, new Dictionary<int, List<Unit> >());
+        }
+
+        int initiative = unit.stats.initiative;
+        if (!units[team].ContainsKey(initiative)) {
+            units[team].Add(initiative, new List<Unit>());
+        }
+
+        if (!units[team][initiative].Contains(unit)) {
+            units[team][initiative].Add(unit);
+        }
     }
 }

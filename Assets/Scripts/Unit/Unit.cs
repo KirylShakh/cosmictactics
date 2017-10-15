@@ -7,7 +7,8 @@ abstract public class Unit : MonoBehaviour {
 
     abstract public string Name { get; }
     abstract public float centerHeight { get; }
-    private Text statsComponent;
+    abstract public Stats stats { get; }
+    private Text statsUI;
 
     public bool isMoving = false;
     public float velocityMultiplier = 10.0f;
@@ -17,6 +18,10 @@ abstract public class Unit : MonoBehaviour {
     private float movePrecision = 0.2f;
 
     protected Rigidbody rb;
+    protected Renderer rd;
+
+    protected int team;
+    protected Material teamMaterial;
 
     // Use this for initialization
     void Start() {
@@ -27,6 +32,12 @@ abstract public class Unit : MonoBehaviour {
     void Update() {
 		
 	}
+
+    protected void Init() {
+
+    }
+
+    public virtual void Setup() {}
 
     protected void FixedUpdate() {
         if (isMoving) {
@@ -89,28 +100,43 @@ abstract public class Unit : MonoBehaviour {
     }
 
     public void ShowStats() {
-        Text stats = FindStatsComponent();
-        if (stats) { 
-            stats.text = Name;
-            stats.enabled = true;
+        Text _statsUI = FindStatsUIComponent();
+        if (_statsUI) {
+            _statsUI.text = Name;
+            _statsUI.enabled = true;
         }
          
     }
 
     public void HideStats() {
-        Text stats = FindStatsComponent();
-        if (stats) {
-            stats.enabled = false;
+        Text _statsUI = FindStatsUIComponent();
+        if (_statsUI) {
+            _statsUI.enabled = false;
         }
     }
 
-    private Text FindStatsComponent() {
-        if (!statsComponent) {
-            GameObject stats = GameObject.FindGameObjectWithTag("Name text");
-            if (stats) {
-                statsComponent = stats.GetComponent<Text>();
+    public void SetTeam(int _team, Material material) {
+        team = _team;
+        teamMaterial = material;
+    }
+
+    private Text FindStatsUIComponent() {
+        if (!statsUI) {
+            GameObject _statsUI = GameObject.FindGameObjectWithTag("Name text");
+            if (_statsUI) {
+                statsUI = _statsUI.GetComponent<Text>();
             }
         }
-        return statsComponent;
+        return statsUI;
+    }
+}
+
+public class Stats {
+    public int move;
+    public int initiative;
+
+    public Stats(int _move, int _initiative) {
+        move = _move;
+        initiative = _initiative;
     }
 }
