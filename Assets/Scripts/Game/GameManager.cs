@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour {
 
     public Text roundText;
+    public Text roundPhaseText;
     public Unit sphereUnit;
     public Unit cubeUnit;
     public Unit sphericalFlyerUnit;
@@ -16,20 +17,23 @@ public class GameManager : MonoBehaviour {
     public float switchingRoundsDelay = 2.0f;
 
     private HexGrid hexGrid;
-    private List<Unit> units1;
     private Units units;
+
     private int round;
+    private int roundPhase;
+    private int actingTeam;
+
     private bool switchingRounds;
     private float switchingRoundsDeltaTime;
+    private bool fightEnded;
 
     private int[] teams = { 0, 1 };
     private int[] initiatives = { 0, 1, 2 };
 
     // Use this for initialization
     void Start() {
-        units1 = new List<Unit>();
-
         units = new Units();
+        fightEnded = false;
         round = 0;
         PlayRoundZero();
     }
@@ -48,7 +52,7 @@ public class GameManager : MonoBehaviour {
 
     private void HandleInput() {
 
-        if (switchingRounds) return;
+        if (switchingRounds || fightEnded) return;
 
         HexGrid grid = FindGrid();
         HexCell highlightedCell = FindHighlightedCell();
@@ -62,13 +66,13 @@ public class GameManager : MonoBehaviour {
         }
 
         if (Input.GetKeyDown(KeyCode.F)) {
-            SpawnUnit(sphereUnit);
+            SpawnUnit(sphereUnit, actingTeam);
         }
         else if (Input.GetKeyDown(KeyCode.G)) {
-            SpawnUnit(cubeUnit);
+            SpawnUnit(cubeUnit, actingTeam);
         }
         else if (Input.GetKeyDown(KeyCode.V)) {
-            SpawnUnit(sphericalFlyerUnit);
+            SpawnUnit(sphericalFlyerUnit, actingTeam);
         }
         else if (Input.GetKeyDown(KeyCode.Return)) {
             if (!switchingRounds) {
@@ -141,12 +145,18 @@ public class GameManager : MonoBehaviour {
     }
 
     private void Act(HexGrid grid, HexCell targetCell) {
-        if (grid && grid.selectedCell && grid.selectedCell.occupied && !grid.selectedCell.occupier.isMoving) {
+        if (grid && grid.selectedCell && grid.selectedCell.occupied && !grid.selectedCell.occupier.isMoving && grid.selectedCell.occupier.canAct && units.Get(actingTeam, roundPhase).Contains(grid.selectedCell.occupier)) {
             if (targetCell) {
-                if (targetCell.occupied && !targetCell.occupier.isMoving) {
-                    targetCell.ResolveActBy(grid.selectedCell.occupier);
+                bool acted = false;
+
+                if (targetCell.occupied && !targetCell.occupier.isMoving && (targetCell.hex.DistanceTo(grid.selectedCell.hex) <= grid.selectedCell.occupier.stats.move)) {
+                    acted = targetCell.ResolveActBy(grid.selectedCell.occupier);
                 }
-                grid.MoveSelectedUnitTo(targetCell);
+                bool moved = grid.MoveSelectedUnitTo(targetCell);
+
+                if (acted || moved) {
+                    NextTeam();
+                }
             }
         }
     }
@@ -166,11 +176,24 @@ public class GameManager : MonoBehaviour {
     }
 
     private void EndRound() {
-        switchingRounds = true;
+        units.Map("RoundEnds");
 
-        foreach (Unit unit in units1) {
-            unit.RoundEnds();
+        if (!FightEnded()) {
+            NextRound();
         }
+    }
+
+    private bool FightEnded() {
+        if (units.OnlySingleTeamRemains() || units.NoTeamsRemains()) {
+            roundText.text = "Fight Ended";
+            roundText.enabled = true;
+            return true;
+        }
+        return false;
+    }
+
+    private void NextRound() {
+        switchingRounds = true;
 
         round++;
         roundText.text = "Round " + round.ToString();
@@ -180,12 +203,75 @@ public class GameManager : MonoBehaviour {
     }
 
     private void StartRound() {
-        foreach (Unit unit in units1) {
-            unit.RoundStarts();
-        }
+        units.Map("RoundStarts");
 
         roundText.enabled = false;
         switchingRounds = false;
+
+        roundPhase = 0;
+        ResetActedTeams();
+
+        UpdateRoundText();
+    }
+
+    private void NextPhase() {
+        roundPhase++;
+        if (roundPhase >= initiatives.Length) {
+            EndRound();
+        }
+        else {
+            ResetActedTeams();
+            if (AllTeamsActed()) {
+                NextPhase();
+            }
+            UpdateRoundText();
+        }
+    }
+
+    private void ResetActedTeams() {
+        actingTeam = 0;
+
+        if (units.AllActed(actingTeam, roundPhase)) {
+            NextTeam();
+        }
+    }
+
+    private void NextTeam() {
+        if (AllTeamsActed()) {
+            NextPhase();
+            return;
+        }
+
+        actingTeam = NextTeam(actingTeam);
+        while (units.AllActed(actingTeam, roundPhase)) {
+            actingTeam = NextTeam(actingTeam);
+        }
+        UpdateRoundText();
+    }
+
+    private int NextTeam(int team) {
+        team++;
+        if (team >= teams.Length) {
+            team = 0;
+        }
+        return team;
+    }
+
+    private bool AllTeamsActed() {
+        foreach (int team in teams) {
+            if (!units.AllActed(team, roundPhase)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void UpdateRoundText() {
+        string team = actingTeam == 0 ? "Blue(0)" : "Red(1)";
+        roundPhaseText.color = actingTeam == 0 ? Color.blue : Color.red;
+
+        string roundPhaseStr = roundPhase == 0 ? "Light(0)" : (roundPhase == 1 ? "Medium(1)" : "Heavy(2)");
+        roundPhaseText.text = "Round " + round.ToString() + ". Phase " + roundPhaseStr + ". Acting team " + team;
     }
 }
 
@@ -209,6 +295,56 @@ public class Units {
 
         if (!units[team][initiative].Contains(unit)) {
             units[team][initiative].Add(unit);
+        }
+
+        unit.UnitDestroyedEvent += OnUnitDestroyed;
+    }
+
+    public void Map(string f) {
+        foreach (KeyValuePair<int, IDictionary<int, List<Unit> > > teamUnits in units) {
+            foreach (KeyValuePair<int, List<Unit> > initiativeUnits in teamUnits.Value) {
+                foreach (Unit unit in initiativeUnits.Value) {
+                    unit.GetType().GetMethod(f).Invoke(unit, new object[] { });
+                }
+            }
+        }
+    }
+
+    public bool AllActed(int team, int initiative) {
+        foreach (Unit unit in Get(team, initiative)) {
+            if (unit.canAct) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public List<Unit> Get(int team, int initiative) {
+        if (units.ContainsKey(team) && units[team].ContainsKey(initiative)) {
+            return units[team][initiative];
+        }
+        return new List<Unit>();
+    }
+
+    public bool OnlySingleTeamRemains() {
+        return units.Keys.Count == 1;
+    }
+
+    public bool NoTeamsRemains() {
+        return units.Keys.Count == 0;
+    }
+
+    private void OnUnitDestroyed(Unit unit) {
+        int team = unit.team;
+        int initiative = unit.stats.initiative;
+
+        units[team][initiative].Remove(unit);
+
+        if (units[team][initiative].Count == 0) {
+            units[team].Remove(initiative);
+        }
+        if (units[team].Count == 0) {
+            units.Remove(team);
         }
     }
 }

@@ -30,6 +30,7 @@ public class CubeUnit : Unit {
 	}
 
     public override void Setup() {
+        base.Setup();
         _stats = new Stats(2, 2);
     }
 }

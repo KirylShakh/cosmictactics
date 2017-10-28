@@ -82,9 +82,9 @@ public class HexGrid : MonoBehaviour {
         }
     }
 
-    public void MoveSelectedUnitTo(HexCell destination) {
+    public bool MoveSelectedUnitTo(HexCell destination) {
         if (!destination || destination.occupied || selectedCell.occupier.isMoving) {
-            return;
+            return false;
         }
 
         List<HexCell> path;
@@ -105,6 +105,8 @@ public class HexGrid : MonoBehaviour {
         } else {
             SelectCell(destination);
         }
+
+        return true;
     }
 
     public void MoveSelectedUnitTo(Point p) {

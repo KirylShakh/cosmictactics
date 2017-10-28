@@ -73,11 +73,13 @@ public class HexCell : MonoBehaviour {
         occupied = false;
     }
 
-    public void ResolveActBy(Unit unit) {
+    public bool ResolveActBy(Unit unit) {
         if (occupied && occupier != unit && !occupier.isMoving) {
             unit.ActOn(occupier);
             UnitLeaves();
+            return true;
         }
+        return false;
     }
 
     private List<Vector3> HexCornerVertices() {

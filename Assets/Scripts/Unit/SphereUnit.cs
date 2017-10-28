@@ -30,6 +30,7 @@ public class SphereUnit : Unit {
     }
 
     public override void Setup() {
+        base.Setup();
         _stats = new Stats(4, 1);
     }
 }

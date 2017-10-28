@@ -30,6 +30,7 @@ public class SphericalFlyerUnit : Unit {
     }
 
     public override void Setup() {
+        base.Setup();
         _stats = new Stats(6, 0);
     }
 }

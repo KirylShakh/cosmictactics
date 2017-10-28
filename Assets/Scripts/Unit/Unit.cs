@@ -20,8 +20,13 @@ abstract public class Unit : MonoBehaviour {
     protected Rigidbody rb;
     protected Renderer rd;
 
-    protected int team;
+    public bool canAct;
+
+    public int team;
     protected Material teamMaterial;
+
+    public delegate void UnitDestroyed(Unit unit);
+    public event UnitDestroyed UnitDestroyedEvent;
 
     // Use this for initialization
     void Start() {
@@ -37,7 +42,9 @@ abstract public class Unit : MonoBehaviour {
 
     }
 
-    public virtual void Setup() {}
+    public virtual void Setup() {
+        canAct = true;
+    }
 
     protected void FixedUpdate() {
         if (isMoving) {
@@ -51,7 +58,10 @@ abstract public class Unit : MonoBehaviour {
     }
 
     public virtual void ActOn(Unit unit) {
+        unit.UnitDestroyedEvent(unit);
         Destroy(unit.gameObject, 0.0f);
+
+        canAct = false;
     }
 
     public virtual void MoveAlong(List<HexCell> path) {
@@ -63,6 +73,8 @@ abstract public class Unit : MonoBehaviour {
             step.Occupy(this);
         }
         movePath[0].UnitLeaves();
+
+        canAct = false;
     }
 
     public virtual void RoundEnds() {
@@ -70,7 +82,7 @@ abstract public class Unit : MonoBehaviour {
     }
 
     public virtual void RoundStarts() {
-
+        canAct = true;
     }
 
     protected void RecalculateMovement() {
