@@ -12,13 +12,25 @@ public class SphericalFlyerUnit : Unit {
         get { return "SphericalFlyerUnit Name"; }
     }
 
-    // Use this for initialization
+    private Stats _stats;
+    public override Stats stats {
+        get { return _stats; }
+    }
+
     void Start () {
         rb = GetComponent<Rigidbody>();
+        rd = GetComponent<Renderer>();
+
+        rd.material = teamMaterial;
     }
 
     // Update is called once per frame
     protected void Update () {
         RecalculateMovement();
+    }
+
+    public override void Setup(HexCell cell) {
+        base.Setup(cell);
+        _stats = new Stats(6, 0);
     }
 }

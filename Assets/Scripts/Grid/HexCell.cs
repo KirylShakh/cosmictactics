@@ -48,6 +48,9 @@ public class HexCell : MonoBehaviour {
         if (selected) {
             Select();
         }
+        else if (occupied && occupier.canBeActivated && occupier.canAct && !occupier.isMoving) {
+            HighlightActivated();
+        }
         else {
             Unselect();
         }
@@ -63,6 +66,11 @@ public class HexCell : MonoBehaviour {
         lr.widthMultiplier = defaultWidth;
     }
 
+    public void HighlightActivated() {
+        lr.material.color = Color.yellow;
+        lr.widthMultiplier = defaultWidth * 3;
+    }
+
     public void Occupy(Unit unit) {
         occupier = unit;
         occupied = true;
@@ -73,11 +81,13 @@ public class HexCell : MonoBehaviour {
         occupied = false;
     }
 
-    public void ResolveActBy(Unit unit) {
+    public bool ResolveActBy(Unit unit) {
         if (occupied && occupier != unit && !occupier.isMoving) {
             unit.ActOn(occupier);
             UnitLeaves();
+            return true;
         }
+        return false;
     }
 
     private List<Vector3> HexCornerVertices() {
