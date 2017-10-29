@@ -17,10 +17,13 @@ abstract public class Unit : MonoBehaviour {
     private int pathCellIndex = 0;
     private float movePrecision = 0.2f;
 
+    public Hex hex;
+
     protected Rigidbody rb;
     protected Renderer rd;
 
     public bool canAct;
+    public bool canBeActivated;
 
     public int team;
     protected Material teamMaterial;
@@ -42,8 +45,9 @@ abstract public class Unit : MonoBehaviour {
 
     }
 
-    public virtual void Setup() {
+    public virtual void Setup(HexCell cell) {
         canAct = true;
+        hex = cell.hex;
     }
 
     protected void FixedUpdate() {
@@ -55,6 +59,7 @@ abstract public class Unit : MonoBehaviour {
     public void MoveTo(HexCell cell) {
         Vector3 cellPos = cell.transform.position;
         transform.position = new Vector3(cellPos.x, cellPos.y + centerHeight, cellPos.z);
+        hex = cell.hex;
     }
 
     public virtual void ActOn(Unit unit) {
@@ -78,11 +83,19 @@ abstract public class Unit : MonoBehaviour {
     }
 
     public virtual void RoundEnds() {
-
+        canBeActivated = false;
     }
 
     public virtual void RoundStarts() {
         canAct = true;
+    }
+
+    public virtual void OnActivate() {
+        canBeActivated = true;
+    }
+
+    public virtual void OnDeactivate() {
+        canBeActivated = false;
     }
 
     protected void RecalculateMovement() {

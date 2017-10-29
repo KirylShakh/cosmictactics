@@ -64,7 +64,7 @@ public class HexGrid : MonoBehaviour {
         ClearHighlighting();
 
         if (selectedCell) {
-            selectedCell.Unselect();
+            selectedCell.ClearHighlighting();
             if (selectedCell.occupied) {
                 selectedCell.occupier.HideStats();
             }
@@ -72,12 +72,21 @@ public class HexGrid : MonoBehaviour {
         }
 
         if (cell) {
-            cell.Select();
-
             highlightedPath.Clear();
             selectedCell = cell;
+            selectedCell.ClearHighlighting(true);
+
             if (selectedCell.occupied) {
                 selectedCell.occupier.ShowStats();
+            }
+        }
+    }
+
+    public void ManageHighlightActivated(List<Unit> units) {
+        foreach (Unit unit in units) {
+            HexCell cell = FindCell(unit.hex);
+            if (cell) {
+                cell.ClearHighlighting();
             }
         }
     }
@@ -114,7 +123,10 @@ public class HexGrid : MonoBehaviour {
     }
 
     public HexCell FindCell(Point p) {
-        Hex hex = p.ToHex(layout);
+        return FindCell(p.ToHex(layout));
+    }
+
+    public HexCell FindCell(Hex hex) {
         return cells.ContainsKey(hex.ToString()) ? cells[hex.ToString()] : null;
     }
 
@@ -211,7 +223,7 @@ public class HexGrid : MonoBehaviour {
         if (CanSpawn()) {
             Vector3 pos = selectedCell.transform.position;
             Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
-            spawnedUnit.Setup();
+            spawnedUnit.Setup(selectedCell);
             selectedCell.Occupy(spawnedUnit);
             selectedCell.occupier.ShowStats();
 
@@ -229,7 +241,7 @@ public class HexGrid : MonoBehaviour {
             HexCell cell = cells[hex.ToString()];
             Vector3 pos = cell.transform.position;
             Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
-            spawnedUnit.Setup();
+            spawnedUnit.Setup(cell);
             cell.Occupy(spawnedUnit);
             return spawnedUnit;
         }

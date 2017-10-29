@@ -112,6 +112,10 @@ public class GameManager : MonoBehaviour {
             if (unit) {
                 units.Add(team, unit);
                 unit.SetTeam(team, teamMaterials[team]);
+
+                if (roundPhase == unit.stats.initiative && actingTeam == team) {
+                    unit.OnActivate();
+                }
             }
         }
     }
@@ -124,6 +128,10 @@ public class GameManager : MonoBehaviour {
             if (unit) {
                 units.Add(team, unit);
                 unit.SetTeam(team, teamMaterials[team]);
+
+                if (roundPhase == unit.stats.initiative && actingTeam == team) {
+                    unit.OnActivate();
+                }
             }
         }
     }
@@ -230,6 +238,8 @@ public class GameManager : MonoBehaviour {
 
     private void ResetActedTeams() {
         actingTeam = 0;
+        units.Map(actingTeam, roundPhase, "OnActivate");
+        FindGrid().ManageHighlightActivated(units.Get(actingTeam, roundPhase));
 
         if (units.AllActed(actingTeam, roundPhase)) {
             NextTeam();
@@ -242,10 +252,17 @@ public class GameManager : MonoBehaviour {
             return;
         }
 
+        units.Map(actingTeam, roundPhase, "OnDeactivate");
+        FindGrid().ManageHighlightActivated(units.Get(actingTeam, roundPhase));
+
         actingTeam = NextTeam(actingTeam);
         while (units.AllActed(actingTeam, roundPhase)) {
             actingTeam = NextTeam(actingTeam);
         }
+
+        units.Map(actingTeam, roundPhase, "OnActivate");
+        FindGrid().ManageHighlightActivated(units.Get(actingTeam, roundPhase));
+
         UpdateRoundText();
     }
 
@@ -307,6 +324,14 @@ public class Units {
                     unit.GetType().GetMethod(f).Invoke(unit, new object[] { });
                 }
             }
+        }
+    }
+
+    public void Map(int team, int initiative, string f) {
+        if (!units.ContainsKey(team) || !units[team].ContainsKey(initiative)) return;
+
+        foreach (Unit unit in units[team][initiative]) {
+            unit.GetType().GetMethod(f).Invoke(unit, new object[] { });
         }
     }
 

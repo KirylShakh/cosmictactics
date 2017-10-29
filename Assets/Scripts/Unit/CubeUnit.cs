@@ -29,8 +29,8 @@ public class CubeUnit : Unit {
         RecalculateMovement();
 	}
 
-    public override void Setup() {
-        base.Setup();
+    public override void Setup(HexCell cell) {
+        base.Setup(cell);
         _stats = new Stats(2, 2);
     }
 }

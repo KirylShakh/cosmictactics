@@ -48,6 +48,9 @@ public class HexCell : MonoBehaviour {
         if (selected) {
             Select();
         }
+        else if (occupied && occupier.canBeActivated && occupier.canAct && !occupier.isMoving) {
+            HighlightActivated();
+        }
         else {
             Unselect();
         }
@@ -61,6 +64,11 @@ public class HexCell : MonoBehaviour {
     public void Unselect() {
         lr.material.color = defaultLRColor;
         lr.widthMultiplier = defaultWidth;
+    }
+
+    public void HighlightActivated() {
+        lr.material.color = Color.yellow;
+        lr.widthMultiplier = defaultWidth * 3;
     }
 
     public void Occupy(Unit unit) {
