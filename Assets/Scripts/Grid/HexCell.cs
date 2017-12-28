@@ -71,6 +71,11 @@ public class HexCell : MonoBehaviour {
         lr.widthMultiplier = defaultWidth * 3;
     }
 
+    public void HighlightActable() {
+        lr.material.color = Color.red;
+        lr.widthMultiplier = defaultWidth * 3;
+    }
+
     public void Occupy(Unit unit) {
         occupier = unit;
         occupied = true;

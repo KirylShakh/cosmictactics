@@ -41,6 +41,28 @@ abstract public class Unit : MonoBehaviour {
 		
 	}
 
+    protected void FixedUpdate() {
+        if (isMoving) {
+            rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
+        }
+    }
+
+    public virtual void RoundEnds() {
+        canBeActivated = false;
+    }
+
+    public virtual void RoundStarts() {
+        canAct = true;
+    }
+
+    public virtual void OnActivate() {
+        canBeActivated = true;
+    }
+
+    public virtual void OnDeactivate() {
+        canBeActivated = false;
+    }
+
     protected void Init() {
 
     }
@@ -48,12 +70,6 @@ abstract public class Unit : MonoBehaviour {
     public virtual void Setup(HexCell cell) {
         canAct = true;
         hex = cell.hex;
-    }
-
-    protected void FixedUpdate() {
-        if (isMoving) {
-            rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
-        }
     }
 
     public void MoveTo(HexCell cell) {
@@ -80,22 +96,6 @@ abstract public class Unit : MonoBehaviour {
         movePath[0].UnitLeaves();
 
         canAct = false;
-    }
-
-    public virtual void RoundEnds() {
-        canBeActivated = false;
-    }
-
-    public virtual void RoundStarts() {
-        canAct = true;
-    }
-
-    public virtual void OnActivate() {
-        canBeActivated = true;
-    }
-
-    public virtual void OnDeactivate() {
-        canBeActivated = false;
     }
 
     protected void RecalculateMovement() {

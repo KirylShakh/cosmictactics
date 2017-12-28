@@ -38,15 +38,12 @@ public class HexGrid : MonoBehaviour {
         }
         ClearHighlighting();
 
-        if (selectedCell && selectedCell.occupied && !cell.occupied) {
+        if (isSomeoneSelected()) {
             highlightedPath = FindPath(selectedCell, cell);
+            HighlightPath();
 
-            if (highlightedPath.Count > selectedCell.occupier.stats.move + 1) {
-                highlightedPath = highlightedPath.GetRange(0, selectedCell.occupier.stats.move + 1);
-            }
-
-            foreach (HexCell pathCell in highlightedPath) {
-                pathCell.Highlight();
+            if (cell.occupied) {
+                cell.HighlightActable();
             }
         }
         else {
@@ -54,6 +51,20 @@ public class HexGrid : MonoBehaviour {
         }
 
         highlightedCell = cell;
+    }
+
+    private bool isSomeoneSelected() {
+        return selectedCell && selectedCell.occupied;
+    }
+
+    private void HighlightPath() {
+        if (highlightedPath.Count > selectedCell.occupier.stats.move + 1) {
+            highlightedPath = highlightedPath.GetRange(0, selectedCell.occupier.stats.move + 1);
+        }
+
+        foreach (HexCell pathCell in highlightedPath) {
+            pathCell.Highlight();
+        }
     }
 
     public void SelectCell(Point p) {
@@ -147,7 +158,7 @@ public class HexGrid : MonoBehaviour {
             if (current == destination.hex) break;
 
             foreach (Hex next in current.Neighbours()) {
-                if (!cells.ContainsKey(next.ToString()) || cells[next.ToString()].occupied) continue;
+                if (!cells.ContainsKey(next.ToString()) || (cells[next.ToString()].occupied && next != destination.hex)) continue;
 
                 float newCost = costSoFar[current] + MovementCost(current, next);
                 if (!costSoFar.ContainsKey(next) || (newCost < costSoFar[next])) {
