@@ -3,3 +3,6 @@ Temp
 .vs
 *.csproj
 obj
+Logs
+UserSettings
+uncosmictactics.userprefs

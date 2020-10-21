@@ -1,7 +1,9 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityComicTactics", "Assembly-CSharp.csproj", "{4BCB5DE2-3ADA-32DF-C868-882CDC2AF645}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30517.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{088C061C-1C77-7F1B-925D-3F6779630F30}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,13 +11,16 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4BCB5DE2-3ADA-32DF-C868-882CDC2AF645}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4BCB5DE2-3ADA-32DF-C868-882CDC2AF645}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4BCB5DE2-3ADA-32DF-C868-882CDC2AF645}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4BCB5DE2-3ADA-32DF-C868-882CDC2AF645}.Release|Any CPU.Build.0 = Release|Any CPU
+		{088C061C-1C77-7F1B-925D-3F6779630F30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{088C061C-1C77-7F1B-925D-3F6779630F30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{088C061C-1C77-7F1B-925D-3F6779630F30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{088C061C-1C77-7F1B-925D-3F6779630F30}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1603CDE6-AE5C-4ACE-9C3D-06A75C5A399D}
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Assembly-CSharp.csproj

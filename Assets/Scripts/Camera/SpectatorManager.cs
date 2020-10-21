@@ -1,9 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class SpectatorManager : MonoBehaviour {
 
+public class SpectatorManager : MonoBehaviour
+{
 	public float speed = 10f;
 	public float controlDistance = 100f;
 

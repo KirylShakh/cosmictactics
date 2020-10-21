@@ -1,23 +1,26 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class CubeUnit : Unit {
 
-    public override float centerHeight {
+public class CubeUnit : Unit
+{
+    public override float centerHeight
+    {
         get { return 0.5f; }
     }
 
-    public override string Name {
+    public override string Name
+    {
         get { return "Cube Name"; }
     }
 
     private Stats _stats;
-    public override Stats stats {
+    public override Stats stats
+    {
         get { return _stats; }
     }
 
-    void Start () {
+    void Start()
+    {
         rb = GetComponent<Rigidbody>();
         rd = GetComponent<Renderer>();
 
@@ -25,11 +28,13 @@ public class CubeUnit : Unit {
     }
 
     // Update is called once per frame
-    protected void Update () {
+    protected void Update()
+    {
         RecalculateMovement();
 	}
 
-    public override void Setup(HexCell cell) {
+    public override void Setup(HexCell cell)
+    {
         base.Setup(cell);
         _stats = new Stats(2, 2);
     }

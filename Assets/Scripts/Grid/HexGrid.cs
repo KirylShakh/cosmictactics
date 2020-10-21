@@ -1,167 +1,174 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class HexGrid : MonoBehaviour {
 
+public class HexGrid : MonoBehaviour
+{
     public int gridXSize = 2;
     public int gridYSize = 2;
     public HexCell hexCell;
 
-    public Layout layout;
-    public IDictionary<string, HexCell> cells;
+    public Layout layout = new Layout(true, new Point(1f, 1f), new Point(0f, 0f));
+    public IDictionary<string, HexCell> cells = new Dictionary<string, HexCell>();
     public HexCell selectedCell;
     public HexCell highlightedCell;
 
     private List<HexCell> highlightedPath = new List<HexCell>();
 
     // Use this for initialization
-    void Start() {
-        layout = new Layout(true, new Point(1f, 1f), new Point(0f, 0f));
-        cells = new Dictionary<string, HexCell>();
-
+    void Start()
+    {
         Generate();
     }
 
     // Update is called once per frame
-    void Update() {
+    void Update() {}
 
-    }
+    public void HighlightCell(Point p) => HighlightCell(FindCell(p));
 
-    public void HighlightCell(Point p) {
-        HighlightCell(FindCell(p));
-    }
+    public void HighlightCell(HexCell cell)
+    {
+        if (!cell) return;
 
-    public void HighlightCell(HexCell cell) {
-        if (!cell) {
-            return;
-        }
         ClearHighlighting();
 
-        if (isSomeoneSelected()) {
+        if (IsSomeoneSelected())
+        {
             highlightedPath = FindPath(selectedCell, cell);
             HighlightPath();
 
-            if (cell.occupied) {
+            if (cell.occupied)
+            {
                 cell.HighlightActable();
             }
         }
-        else {
+        else
+        {
             cell.Highlight();
         }
 
         highlightedCell = cell;
     }
 
-    private bool isSomeoneSelected() {
-        return selectedCell && selectedCell.occupied;
-    }
+    private bool IsSomeoneSelected() => selectedCell && selectedCell.occupied;
 
-    private void HighlightPath() {
-        if (highlightedPath.Count > selectedCell.occupier.stats.move + 1) {
+    private void HighlightPath()
+    {
+        if (highlightedPath.Count > selectedCell.occupier.stats.move + 1)
+        {
             highlightedPath = highlightedPath.GetRange(0, selectedCell.occupier.stats.move + 1);
         }
 
-        foreach (HexCell pathCell in highlightedPath) {
+        foreach (HexCell pathCell in highlightedPath)
+        {
             pathCell.Highlight();
         }
     }
 
-    public void SelectCell(Point p) {
-        SelectCell(FindCell(p));
-    }
+    public void SelectCell(Point p) => SelectCell(FindCell(p));
 
-    public void SelectCell(HexCell cell) {
+    public void SelectCell(HexCell cell)
+    {
         ClearHighlighting();
 
-        if (selectedCell) {
+        if (selectedCell)
+        {
             selectedCell.ClearHighlighting();
-            if (selectedCell.occupied) {
+            if (selectedCell.occupied)
+            {
                 selectedCell.occupier.HideStats();
             }
 
         }
 
-        if (cell) {
+        if (cell)
+        {
             highlightedPath.Clear();
             selectedCell = cell;
             selectedCell.ClearHighlighting(true);
 
-            if (selectedCell.occupied) {
+            if (selectedCell.occupied)
+            {
                 selectedCell.occupier.ShowStats();
             }
         }
     }
 
-    public void ManageHighlightActivated(List<Unit> units) {
-        foreach (Unit unit in units) {
+    public void ManageHighlightActivated(List<Unit> units)
+    {
+        foreach (Unit unit in units)
+        {
             HexCell cell = FindCell(unit.hex);
-            if (cell) {
-                cell.ClearHighlighting();
-            }
+            cell?.ClearHighlighting();
         }
     }
 
-    public bool MoveSelectedUnitTo(HexCell destination) {
-        if (!destination || destination.occupied || selectedCell.occupier.isMoving) {
-            return false;
-        }
+    public bool MoveSelectedUnitTo(HexCell destination)
+    {
+        if (!destination || destination.occupied || selectedCell.occupier.isMoving) return false;
 
         List<HexCell> path;
-        if (highlightedPath.Count < 2 || highlightedPath[highlightedPath.Count - 1] != destination) {
+        if (highlightedPath.Count < 2 || highlightedPath[highlightedPath.Count - 1] != destination)
+        {
             path = FindPath(selectedCell, destination);
 
-            if (path.Count > selectedCell.occupier.stats.move + 1) {
+            if (path.Count > selectedCell.occupier.stats.move + 1)
+            {
                 path = path.GetRange(0, selectedCell.occupier.stats.move + 1);
             }
         }
-        else {
+        else
+        {
             path = new List<HexCell>(highlightedPath.ToArray());
         }
 
-        if (path.Count >= 2) {
+        if (path.Count >= 2)
+        {
             selectedCell.occupier.MoveAlong(path);
             SelectCell(path[path.Count - 1]);
-        } else {
+        } else
+        {
             SelectCell(destination);
         }
 
         return true;
     }
 
-    public void MoveSelectedUnitTo(Point p) {
-        MoveSelectedUnitTo(FindCell(p));
-    }
+    public void MoveSelectedUnitTo(Point p) => MoveSelectedUnitTo(FindCell(p));
 
-    public HexCell FindCell(Point p) {
-        return FindCell(p.ToHex(layout));
-    }
+    public HexCell FindCell(Point p) => FindCell(p.ToHex(layout));
 
-    public HexCell FindCell(Hex hex) {
-        return cells.ContainsKey(hex.ToString()) ? cells[hex.ToString()] : null;
-    }
+    public HexCell FindCell(Hex hex) => cells.ContainsKey(hex.ToString()) ? cells[hex.ToString()] : null;
 
-    public List<HexCell> FindPath(HexCell start, HexCell destination) {
-        List<HexCell> path = new List<HexCell>();
+    public List<HexCell> FindPath(HexCell start, HexCell destination)
+    {
+        var path = new List<HexCell>();
 
-        PriorityQueue<Hex> frontier = new PriorityQueue<Hex>();
+        var frontier = new PriorityQueue<Hex>();
         frontier.Enqueue(start.hex, 0);
 
-        IDictionary<Hex, Hex> cameFrom = new Dictionary<Hex, Hex>();
-        cameFrom[start.hex] = null;
+        var cameFrom = new Dictionary<Hex, Hex>
+        {
+            [start.hex] = null
+        };
 
-        IDictionary<Hex, float> costSoFar = new Dictionary<Hex, float>();
-        costSoFar[start.hex] = 0;
+        var costSoFar = new Dictionary<Hex, float>
+        {
+            [start.hex] = 0
+        };
 
-        while (frontier.Count() != 0) {
-            Hex current = frontier.Dequeue();
+        while (frontier.Count() != 0)
+        {
+            var current = frontier.Dequeue();
             if (current == destination.hex) break;
 
-            foreach (Hex next in current.Neighbours()) {
+            foreach (var next in current.Neighbours())
+            {
                 if (!cells.ContainsKey(next.ToString()) || (cells[next.ToString()].occupied && next != destination.hex)) continue;
 
                 float newCost = costSoFar[current] + MovementCost(current, next);
-                if (!costSoFar.ContainsKey(next) || (newCost < costSoFar[next])) {
+                if (!costSoFar.ContainsKey(next) || (newCost < costSoFar[next]))
+                {
                     costSoFar[next] = newCost;
                     float priority = newCost + HeuristicDistance(next, destination.hex);
                     frontier.Enqueue(next, priority);
@@ -170,8 +177,9 @@ public class HexGrid : MonoBehaviour {
             }
         }
 
-        Hex step = destination.hex;
-        while (step != null) {
+        var step = destination.hex;
+        while (step != null)
+        {
             path.Add(cells[step.ToString()]);
             step = cameFrom[step];
         }
@@ -180,27 +188,23 @@ public class HexGrid : MonoBehaviour {
         return path;
     }
 
-    private float MovementCost(Hex current, Hex next) {
-        if (cells.ContainsKey(current.ToString()) && cells.ContainsKey(next.ToString())) {
-            return cells[next.ToString()].cost;
-        }
-        return 0;
-    }
+    private float MovementCost(Hex current, Hex next) => cells.ContainsKey(current.ToString()) && cells.ContainsKey(next.ToString()) ? cells[next.ToString()].cost : 0;
 
-    private float HeuristicDistance(Hex from, Hex to) {
-        return (cells[to.ToString()].transform.position - cells[from.ToString()].transform.position).magnitude;
-    }
+    private float HeuristicDistance(Hex from, Hex to) => (cells[to.ToString()].transform.position - cells[from.ToString()].transform.position).magnitude;
 
-    private void Generate() {
+    private void Generate()
+    {
         int qMax = gridXSize / 2;
         int rMax = gridYSize / 2;
         
-        for (int i = -qMax; i < qMax; i++) {
-            for (int j = -rMax; j < rMax; j++) {
-                Hex hex = new Hex(i, j);
-                Point p = hex.ToPoint(layout);
+        for (int i = -qMax; i < qMax; i++)
+        {
+            for (int j = -rMax; j < rMax; j++)
+            {
+                var hex = new Hex(i, j);
+                var p = hex.ToPoint(layout);
 
-                HexCell cell = Instantiate(hexCell, new Vector3(p.x, 0.1f, p.y), Quaternion.identity);
+                var cell = Instantiate(hexCell, new Vector3(p.x, 0.1f, p.y), Quaternion.identity);
                 cell.Init(layout, p, hex);
 
                 cells.Add(hex.ToString(), cell);
@@ -208,38 +212,44 @@ public class HexGrid : MonoBehaviour {
         }
     }
 
-    public void ClearHighlighting() {
-        foreach (HexCell pathCell in highlightedPath) {
+    public void ClearHighlighting()
+    {
+        foreach (HexCell pathCell in highlightedPath)
+        {
             pathCell.ClearHighlighting(false);
         }
-        if (highlightedPath.Count > 0 && highlightedPath[0].Equals(selectedCell)) {
+        if (highlightedPath.Count > 0 && highlightedPath[0].Equals(selectedCell))
+        {
             selectedCell.Select();
         }
 
-        if (highlightedCell) {
+        if (highlightedCell)
+        {
             highlightedCell.ClearHighlighting(highlightedCell.Equals(selectedCell));
         }
     }
 
-    public bool CanSpawn() {
-        return selectedCell && !selectedCell.occupied;
-    }
+    public bool CanSpawn() => selectedCell && !selectedCell.occupied;
 
-    public bool CanSpawnAt(Hex hex) {
+    public bool CanSpawnAt(Hex hex)
+    {
         HexCell cell = cells.ContainsKey(hex.ToString()) ? cells[hex.ToString()] : null;
         return cell && !cell.occupied;
     }
 
-    public Unit Spawn(Unit unit) {
-        if (CanSpawn()) {
-            Vector3 pos = selectedCell.transform.position;
-            Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
+    public Unit Spawn(Unit unit)
+    {
+        if (CanSpawn())
+        {
+            var pos = selectedCell.transform.position;
+            var spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
             spawnedUnit.Setup(selectedCell);
             selectedCell.Occupy(spawnedUnit);
             selectedCell.occupier.ShowStats();
 
             ClearHighlighting();
-            if (highlightedCell) {
+            if (highlightedCell)
+            {
                 HighlightCell(highlightedCell);
             }
             return spawnedUnit;
@@ -247,13 +257,17 @@ public class HexGrid : MonoBehaviour {
         return null;
     }
 
-    public Unit SpawnAt(Unit unit, Hex hex) {
-        if (CanSpawnAt(hex)) {
-            HexCell cell = cells[hex.ToString()];
-            Vector3 pos = cell.transform.position;
-            Unit spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
+    public Unit SpawnAt(Unit unit, Hex hex)
+    {
+        if (CanSpawnAt(hex))
+        {
+            var cell = cells[hex.ToString()];
+            var pos = cell.transform.position;
+            var spawnedUnit = Instantiate(unit, new Vector3(pos.x, pos.y + unit.centerHeight, pos.z), Quaternion.identity);
+
             spawnedUnit.Setup(cell);
             cell.Occupy(spawnedUnit);
+
             return spawnedUnit;
         }
         return null;

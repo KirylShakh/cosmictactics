@@ -3,173 +3,188 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameManager : MonoBehaviour {
 
+public class GameManager : MonoBehaviour
+{
+    // texts
     public Text roundText;
     public Text roundPhaseText;
+
+    // base classes for units that can be spawn in this game
     public Unit sphereUnit;
     public Unit cubeUnit;
     public Unit sphericalFlyerUnit;
 
+    // now is used to distinguish teams from each other
     public Material[] teamMaterials;
 
+    // distance from camera to objects that can be targetable, clickable
     public float controlDistance = 100f;
+    // delay between rounds
     public float switchingRoundsDelay = 2.0f;
 
-    private HexGrid hexGrid;
+    private HexGrid Grid { get; set; }
+
+    // collection for units that were spawned on current map
     private Units units;
 
+    // current round
     private int round;
+    // current round phase as per initiative (see below)
     private int roundPhase;
     private int actingTeam;
 
+    // flag to stop the player controls when switch round procedure is in effect
     private bool switchingRounds;
+    // delta for delay between rounds
     private float switchingRoundsDeltaTime;
+    // flag when map conflict is resolved
     private bool fightEnded;
 
-    private int[] teams = { 0, 1 };
-    private int[] initiatives = { 0, 1, 2 };
+    // teams ids
+    private readonly int[] teams = { 0, 1 };
+    // units initiative classes, round is divided into phases, units take turns from both teams according to their initiatives
+    private readonly int[] initiatives = { 0, 1, 2 };
 
-    // Use this for initialization
-    void Start() {
+    void Start()
+    {
         units = new Units();
         fightEnded = false;
-        round = 0;
+        Grid = GameObject.FindWithTag("HexGrid")?.GetComponent<HexGrid>();
+        // init constants, spawn armies, start first round
         PlayRoundZero();
     }
 	
-    // Update is called once per frame
-    void Update() {
+    void Update()
+    {
         HandleInput();
 
-        if (switchingRounds) {
+        if (switchingRounds)
+        {
             switchingRoundsDeltaTime += Time.deltaTime;
-            if (switchingRoundsDeltaTime >= switchingRoundsDelay) {
+            if (switchingRoundsDeltaTime >= switchingRoundsDelay)
+            {
                 StartRound();
             }
         }
     }
 
-    private void HandleInput() {
-
+    private void HandleInput()
+    {
         if (switchingRounds || fightEnded) return;
 
-        HexGrid grid = FindGrid();
         HexCell highlightedCell = FindHighlightedCell();
-        HandleHighlighting(grid, highlightedCell);
+        HandleHighlighting(highlightedCell);
         
-        if (Input.GetMouseButtonDown(0)) {
-            Select(grid, highlightedCell);
+        if (Input.GetMouseButtonDown(0))
+        {
+            Select(highlightedCell);
         }
-        else if (Input.GetButton("Fire2")) {
-            Act(grid, highlightedCell);
+        else if (Input.GetButton("Fire2"))
+        {
+            Act(highlightedCell);
         }
-
-        if (Input.GetKeyDown(KeyCode.F)) {
+        else if (Input.GetKeyDown(KeyCode.F))
+        {
             SpawnUnit(sphereUnit, actingTeam);
         }
-        else if (Input.GetKeyDown(KeyCode.G)) {
+        else if (Input.GetKeyDown(KeyCode.G))
+        {
             SpawnUnit(cubeUnit, actingTeam);
         }
-        else if (Input.GetKeyDown(KeyCode.V)) {
+        else if (Input.GetKeyDown(KeyCode.V))
+        {
             SpawnUnit(sphericalFlyerUnit, actingTeam);
         }
-        else if (Input.GetKeyDown(KeyCode.Return)) {
-            if (!switchingRounds) {
+        else if (Input.GetKeyDown(KeyCode.Return))
+        {
+            if (!switchingRounds)
+            {
                 EndRound();
-                grid.ClearHighlighting();
+                Grid.ClearHighlighting();
             }
         }
     }
 
-     private HexCell FindHighlightedCell() {
+    private HexCell FindHighlightedCell()
+    {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
         if ((Physics.Raycast(ray, out hit, controlDistance) && hit.transform.gameObject.CompareTag("Unit")) ||
-            (Physics.Raycast(ray, out hit, controlDistance, LayerMask.GetMask("Floor")))) {
-
-            HexGrid grid = FindGrid();
-            if (grid) {
-                return grid.FindCell(new Point(hit.point.x, hit.point.z));
-            }
+            (Physics.Raycast(ray, out hit, controlDistance, LayerMask.GetMask("Floor"))))
+        {
+            return Grid.FindCell(new Point(hit.point.x, hit.point.z));
         }
 
         return null;
     }
 
-    private void HandleHighlighting(HexGrid grid, HexCell cell) {
-        if (cell && grid.highlightedCell != cell) {
-            grid.HighlightCell(cell);
+    private void HandleHighlighting(HexCell cell)
+    {
+        if (cell && Grid.highlightedCell != cell)
+        {
+            Grid.HighlightCell(cell);
         }
     }
 
-    private void SpawnUnit(Unit unitClass, int team = 0) {
-        HexGrid grid = FindGrid();
-        if (grid) {
-            Unit unit = grid.Spawn(unitClass);
+    private void SpawnUnit(Unit unitClass, int team = 0) => SpawnUnitAt(unitClass, null, team);
 
-            if (unit) {
-                units.Add(team, unit);
-                unit.SetTeam(team, teamMaterials[team]);
+    private void SpawnUnitAt(Unit unitClass, Hex hex, int team = 0)
+    {
+        Unit unit = hex is null ? Grid.Spawn(unitClass) : Grid.SpawnAt(unitClass, hex);
+        if (unit)
+        {
+            units.Add(team, unit);
+            unit.SetTeam(team, teamMaterials[team]);
 
-                if (roundPhase == unit.stats.initiative && actingTeam == team) {
-                    unit.OnActivate();
-                }
+            if (roundPhase == unit.stats.initiative && actingTeam == team)
+            {
+                unit.OnActivate();
+            }
+        }
+    }
+    
+    private void Select(HexCell cell)
+    {
+        if (cell && Grid.selectedCell != cell)
+        {
+            Grid.SelectCell(cell);
+        }
+    }
+
+    private void Act(HexCell targetCell)
+    {
+        if (!targetCell) return;
+
+        if  (Grid.selectedCell &&
+            Grid.selectedCell.occupied &&
+            !Grid.selectedCell.occupier.isMoving &&
+            Grid.selectedCell.occupier.canAct &&
+            units[actingTeam, roundPhase].Contains(Grid.selectedCell.occupier)) 
+        {
+            bool acted = false;
+
+            if (targetCell.occupied &&
+                !targetCell.occupier.isMoving &&
+                (targetCell.hex.DistanceTo(Grid.selectedCell.hex) <= Grid.selectedCell.occupier.stats.move))
+            {
+                acted = targetCell.ResolveActBy(Grid.selectedCell.occupier);
+            }
+            bool moved = Grid.MoveSelectedUnitTo(targetCell);
+
+            if (acted || moved)
+            {
+                PassToNextTeam();
             }
         }
     }
 
-    private void SpawnUnitAt(Unit unitClass, Hex hex, int team = 0) {
-        HexGrid grid = FindGrid();
-        if (grid) {
-            Unit unit = grid.SpawnAt(unitClass, hex);
+    private void PlayRoundZero()
+    {
+        // init constants        
+        round = 0;
 
-            if (unit) {
-                units.Add(team, unit);
-                unit.SetTeam(team, teamMaterials[team]);
-
-                if (roundPhase == unit.stats.initiative && actingTeam == team) {
-                    unit.OnActivate();
-                }
-            }
-        }
-    }
-
-    private HexGrid FindGrid() {
-        if (!hexGrid) {
-            GameObject gridGameObject = GameObject.FindWithTag("HexGrid");
-            if (gridGameObject) {
-                hexGrid = gridGameObject.GetComponent<HexGrid>();
-            }
-        }
-        return hexGrid;
-    }
-
-    private void Select(HexGrid grid, HexCell cell) {
-        if (cell && grid.selectedCell != cell) {
-            grid.SelectCell(cell);
-        }
-    }
-
-    private void Act(HexGrid grid, HexCell targetCell) {
-        if (grid && grid.selectedCell && grid.selectedCell.occupied && !grid.selectedCell.occupier.isMoving && grid.selectedCell.occupier.canAct && units.Get(actingTeam, roundPhase).Contains(grid.selectedCell.occupier)) {
-            if (targetCell) {
-                bool acted = false;
-
-                if (targetCell.occupied && !targetCell.occupier.isMoving && (targetCell.hex.DistanceTo(grid.selectedCell.hex) <= grid.selectedCell.occupier.stats.move)) {
-                    acted = targetCell.ResolveActBy(grid.selectedCell.occupier);
-                }
-                bool moved = grid.MoveSelectedUnitTo(targetCell);
-
-                if (acted || moved) {
-                    NextTeam();
-                }
-            }
-        }
-    }
-
-    private void PlayRoundZero() {
         // spawn blue team
         SpawnUnitAt(sphereUnit, new Hex(-3, 0), 0);
         SpawnUnitAt(sphericalFlyerUnit, new Hex(-3, 2), 0);
@@ -183,16 +198,20 @@ public class GameManager : MonoBehaviour {
         EndRound();
     }
 
-    private void EndRound() {
+    private void EndRound()
+    {
         units.Map("RoundEnds");
 
-        if (!FightEnded()) {
+        if (!FightEnded())
+        {
             NextRound();
         }
     }
 
-    private bool FightEnded() {
-        if (units.OnlySingleTeamRemains() || units.NoTeamsRemains()) {
+    private bool FightEnded()
+    {
+        if (units.OnlySingleTeamRemains() || units.NoTeamsRemains())
+        {
             roundText.text = "Fight Ended";
             roundText.enabled = true;
             return true;
@@ -200,7 +219,8 @@ public class GameManager : MonoBehaviour {
         return false;
     }
 
-    private void NextRound() {
+    private void NextRound()
+    {
         switchingRounds = true;
 
         round++;
@@ -210,7 +230,8 @@ public class GameManager : MonoBehaviour {
         switchingRoundsDeltaTime = 0.0f;
     }
 
-    private void StartRound() {
+    private void StartRound()
+    {
         units.Map("RoundStarts");
 
         roundText.enabled = false;
@@ -222,153 +243,159 @@ public class GameManager : MonoBehaviour {
         UpdateRoundText();
     }
 
-    private void NextPhase() {
+    private void NextPhase()
+    {
         roundPhase++;
-        if (roundPhase >= initiatives.Length) {
+        if (roundPhase >= initiatives.Length)
+        {
             EndRound();
         }
-        else {
+        else
+        {
             ResetActedTeams();
-            if (AllTeamsActed()) {
+            if (AllTeamsActed())
+            {
                 NextPhase();
             }
             UpdateRoundText();
         }
     }
 
-    private void ResetActedTeams() {
+    private void ResetActedTeams()
+    {
         actingTeam = 0;
         units.Map(actingTeam, roundPhase, "OnActivate");
-        FindGrid().ManageHighlightActivated(units.Get(actingTeam, roundPhase));
+        Grid.ManageHighlightActivated(units[actingTeam, roundPhase]);
 
-        if (units.AllActed(actingTeam, roundPhase)) {
-            NextTeam();
+        if (units.AllActed(actingTeam, roundPhase))
+        {
+            PassToNextTeam();
         }
     }
 
-    private void NextTeam() {
-        if (AllTeamsActed()) {
+    private void PassToNextTeam()
+    {
+        if (AllTeamsActed())
+        {
             NextPhase();
             return;
         }
 
         units.Map(actingTeam, roundPhase, "OnDeactivate");
-        FindGrid().ManageHighlightActivated(units.Get(actingTeam, roundPhase));
+        Grid.ManageHighlightActivated(units[actingTeam, roundPhase]);
 
-        actingTeam = NextTeam(actingTeam);
-        while (units.AllActed(actingTeam, roundPhase)) {
-            actingTeam = NextTeam(actingTeam);
+        NextTeam();
+        while (units.AllActed(actingTeam, roundPhase))
+        {
+            NextTeam();
         }
 
         units.Map(actingTeam, roundPhase, "OnActivate");
-        FindGrid().ManageHighlightActivated(units.Get(actingTeam, roundPhase));
+        Grid.ManageHighlightActivated(units[actingTeam, roundPhase]);
 
         UpdateRoundText();
     }
 
-    private int NextTeam(int team) {
-        team++;
-        if (team >= teams.Length) {
-            team = 0;
-        }
-        return team;
-    }
+    private void NextTeam() => actingTeam = (actingTeam + 1 < teams.Length) ? actingTeam + 1 : 0;
 
-    private bool AllTeamsActed() {
-        foreach (int team in teams) {
-            if (!units.AllActed(team, roundPhase)) {
-                return false;
-            }
+    private bool AllTeamsActed()
+    {
+        foreach (int team in teams)
+        {
+            if (!units.AllActed(team, roundPhase)) return false;
         }
         return true;
     }
 
-    private void UpdateRoundText() {
+    private void UpdateRoundText()
+    {
         string team = actingTeam == 0 ? "Blue(0)" : "Red(1)";
         roundPhaseText.color = actingTeam == 0 ? Color.blue : Color.red;
 
         string roundPhaseStr = roundPhase == 0 ? "Light(0)" : (roundPhase == 1 ? "Medium(1)" : "Heavy(2)");
-        roundPhaseText.text = "Round " + round.ToString() + ". Phase " + roundPhaseStr + ". Acting team " + team;
+        roundPhaseText.text = $"Round {round}. Phase {roundPhaseStr}. Acting team {team}";
     }
 }
 
-public class Units {
 
-    private IDictionary<int, IDictionary<int, List<Unit> > > units;
+public class Units
+{
+    private readonly IDictionary<int, IDictionary<int, List<Unit>>> units = new Dictionary<int, IDictionary<int, List<Unit>>>();
 
-    public Units() {
-        units = new Dictionary<int, IDictionary<int, List<Unit> > >();
-    }
-
-    public void Add(int team, Unit unit) {
-        if (!units.ContainsKey(team)) {
-            units.Add(team, new Dictionary<int, List<Unit> >());
+    public void Add(int team, Unit unit)
+    {
+        if (!units.ContainsKey(team))
+        {
+            units.Add(team, new Dictionary<int, List<Unit>>());
         }
 
         int initiative = unit.stats.initiative;
-        if (!units[team].ContainsKey(initiative)) {
+        if (!units[team].ContainsKey(initiative))
+        {
             units[team].Add(initiative, new List<Unit>());
         }
 
-        if (!units[team][initiative].Contains(unit)) {
+        if (!units[team][initiative].Contains(unit))
+        {
             units[team][initiative].Add(unit);
         }
 
         unit.UnitDestroyedEvent += OnUnitDestroyed;
     }
 
-    public void Map(string f) {
-        foreach (KeyValuePair<int, IDictionary<int, List<Unit> > > teamUnits in units) {
-            foreach (KeyValuePair<int, List<Unit> > initiativeUnits in teamUnits.Value) {
-                foreach (Unit unit in initiativeUnits.Value) {
+    public void Map(string f)
+    {
+        foreach (KeyValuePair<int, IDictionary<int, List<Unit>>> teamUnits in units)
+        {
+            foreach (KeyValuePair<int, List<Unit>> initiativeUnits in teamUnits.Value)
+            {
+                foreach (Unit unit in initiativeUnits.Value)
+                {
                     unit.GetType().GetMethod(f).Invoke(unit, new object[] { });
                 }
             }
         }
     }
 
-    public void Map(int team, int initiative, string f) {
+    public void Map(int team, int initiative, string f)
+    {
         if (!units.ContainsKey(team) || !units[team].ContainsKey(initiative)) return;
 
-        foreach (Unit unit in units[team][initiative]) {
+        foreach (Unit unit in units[team][initiative])
+        {
             unit.GetType().GetMethod(f).Invoke(unit, new object[] { });
         }
     }
 
-    public bool AllActed(int team, int initiative) {
-        foreach (Unit unit in Get(team, initiative)) {
-            if (unit.canAct) {
-                return false;
-            }
+    public bool AllActed(int team, int initiative)
+    {
+        foreach (Unit unit in this[team, initiative])
+        {
+            if (unit.canAct) return false;
         }
         return true;
     }
 
-    public List<Unit> Get(int team, int initiative) {
-        if (units.ContainsKey(team) && units[team].ContainsKey(initiative)) {
-            return units[team][initiative];
-        }
-        return new List<Unit>();
-    }
+    // t - team, i - initiative
+    public List<Unit> this[int t, int i] => (units.ContainsKey(t) && units[t].ContainsKey(i)) ? units[t][i] : new List<Unit>();
 
-    public bool OnlySingleTeamRemains() {
-        return units.Keys.Count == 1;
-    }
+    public bool OnlySingleTeamRemains() => units.Keys.Count == 1;
 
-    public bool NoTeamsRemains() {
-        return units.Keys.Count == 0;
-    }
+    public bool NoTeamsRemains() => units.Keys.Count == 0;
 
-    private void OnUnitDestroyed(Unit unit) {
+    private void OnUnitDestroyed(Unit unit)
+    {
         int team = unit.team;
         int initiative = unit.stats.initiative;
 
         units[team][initiative].Remove(unit);
 
-        if (units[team][initiative].Count == 0) {
+        if (units[team][initiative].Count == 0)
+        {
             units[team].Remove(initiative);
         }
-        if (units[team].Count == 0) {
+        if (units[team].Count == 0)
+        {
             units.Remove(team);
         }
     }
