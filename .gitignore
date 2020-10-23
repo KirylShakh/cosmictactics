@@ -2,6 +2,7 @@ Library
 Temp
 .vs
 *.csproj
+*.tmp
 obj
 Logs
 UserSettings

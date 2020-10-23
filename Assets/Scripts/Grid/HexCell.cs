@@ -17,7 +17,7 @@ public class HexCell : MonoBehaviour
     private LineRenderer lr;
     private Color defaultLRColor;
     private float defaultWidth;
-    
+
     void Start ()
     {
         lr = GetComponent<LineRenderer>();
@@ -48,7 +48,7 @@ public class HexCell : MonoBehaviour
         {
             Select();
         }
-        else if (occupied && occupier.canBeActivated && occupier.canAct && !occupier.isMoving)
+        else if (occupied && occupier.canBeActivated && occupier.canAct && !occupier.IsMoving)
         {
             HighlightActivated();
         }
@@ -80,7 +80,7 @@ public class HexCell : MonoBehaviour
 
     public bool ResolveActBy(Unit unit)
     {
-        if (occupied && occupier != unit && !occupier.isMoving)
+        if (occupied && occupier != unit && !occupier.IsMoving)
         {
             unit.ActOn(occupier);
             UnitLeaves();

@@ -3,11 +3,6 @@
 
 public class SphericalFlyerUnit : Unit
 {
-    public override float centerHeight
-    {
-        get { return 2.5f; }
-    }
-
     public override string Name
     {
         get { return "SphericalFlyerUnit Name"; }
@@ -19,23 +14,11 @@ public class SphericalFlyerUnit : Unit
         get { return _stats; }
     }
 
-    void Start()
-    {
-        rb = GetComponent<Rigidbody>();
-        rd = GetComponent<Renderer>();
-
-        rd.material = teamMaterial;
-    }
-
-    // Update is called once per frame
-    protected void Update()
-    {
-        RecalculateMovement();
-    }
-
     public override void Setup(HexCell cell)
     {
         base.Setup(cell);
-        _stats = new Stats(6, 0);
+        _stats = new Stats(13, 0);
+
+        needChangeDirectionDuringMove = true;
     }
 }

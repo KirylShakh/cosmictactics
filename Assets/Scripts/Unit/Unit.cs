@@ -6,23 +6,23 @@ using UnityEngine.UI;
 abstract public class Unit : MonoBehaviour
 {
     abstract public string Name { get; }
-    abstract public float centerHeight { get; }
     abstract public Stats stats { get; }
     private Text statsUI;
 
     public List<BaseUnitStatus> activeStatuses;
 
-    public bool isMoving = false;
-    public float velocityMultiplier = 10.0f;
-    private Vector3 velocity;
+    public bool IsMoving = false;
+    public float velocity = 10.0f;
     private List<HexCell> movePath;
     private int pathCellIndex = 0;
     private float movePrecision = 0.2f;
+    protected bool needChangeDirectionDuringMove = false;
 
     public Hex hex;
 
     protected Rigidbody rb;
     protected Renderer rd;
+    protected Animator animator;
 
     public bool canAct;
     public bool canBeActivated;
@@ -36,17 +36,22 @@ abstract public class Unit : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        rb = GetComponent<Rigidbody>();
+
+        rd = GetComponent<Renderer>();
+        rd.material = teamMaterial;
+
+        animator = GetComponent<Animator>();
+
         activeStatuses = new List<BaseUnitStatus>();
 	}
 
     // Update is called once per frame
-    void Update() {}
-
-    protected void FixedUpdate()
+    void Update()
     {
-        if (isMoving)
+        if (IsMoving)
         {
-            rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
+            RecalculateMovement();
         }
     }
 
@@ -69,7 +74,7 @@ abstract public class Unit : MonoBehaviour
     public void MoveTo(HexCell cell)
     {
         Vector3 cellPos = cell.transform.position;
-        transform.position = new Vector3(cellPos.x, cellPos.y + centerHeight, cellPos.z);
+        transform.parent.position = new Vector3(cellPos.x, cellPos.y, cellPos.z);
         hex = cell.hex;
     }
 
@@ -90,7 +95,8 @@ abstract public class Unit : MonoBehaviour
 
     public virtual void MoveAlong(List<HexCell> path)
     {
-        isMoving = true;
+        IsMoving = true;
+        animator.SetBool("IsMoving", true);
         movePath = path;
         pathCellIndex = 1;
 
@@ -105,31 +111,31 @@ abstract public class Unit : MonoBehaviour
 
     protected void RecalculateMovement()
     {
-        if (isMoving) 
+        if ((pathCellIndex >= movePath.Count - 1) && IsNearCell(movePath[pathCellIndex]))
         {
-            if ((pathCellIndex >= movePath.Count - 1) && IsNearCell(movePath[pathCellIndex]))
+            MoveTo(movePath[pathCellIndex]);
+            IsMoving = false;
+            animator.SetBool("IsMoving", false);
+        }
+        else
+        {
+            if (IsNearCell(movePath[pathCellIndex]))
             {
-                MoveTo(movePath[pathCellIndex]);
-                isMoving = false;
+                movePath[pathCellIndex].UnitLeaves();
+                pathCellIndex++;
             }
-            else
-            {
-                if (IsNearCell(movePath[pathCellIndex]))
-                {
-                    movePath[pathCellIndex].UnitLeaves();
-                    pathCellIndex++;
-                }
 
-                velocity = DirectionTo(movePath[pathCellIndex]).normalized * velocityMultiplier;
+            Vector3 cellPos = movePath[pathCellIndex].transform.position;
+            transform.parent.position = Vector3.MoveTowards(transform.parent.position, cellPos, velocity * Time.deltaTime);
+
+            if (needChangeDirectionDuringMove)
+            {
+                transform.parent.LookAt(cellPos);
             }
         }
     }
 
-    protected Vector3 DirectionTo(HexCell cell)
-    {
-        Vector3 hexedPosition = new Vector3(transform.position.x, transform.position.y - centerHeight, transform.position.z);
-        return cell.transform.position - hexedPosition;
-    }
+    protected Vector3 DirectionTo(HexCell cell) => cell.transform.position - transform.parent.position;
 
     protected bool IsNearCell(HexCell cell) => DirectionTo(cell).magnitude <= movePrecision;
 
@@ -141,7 +147,6 @@ abstract public class Unit : MonoBehaviour
             _statsUI.text = Name;
             _statsUI.enabled = true;
         }
-         
     }
 
     public void HideStats()

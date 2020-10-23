@@ -54,7 +54,7 @@ public class GameManager : MonoBehaviour
         // init constants, spawn armies, start first round
         PlayRoundZero();
     }
-	
+
     void Update()
     {
         HandleInput();
@@ -75,7 +75,7 @@ public class GameManager : MonoBehaviour
 
         HexCell highlightedCell = FindHighlightedCell();
         HandleHighlighting(highlightedCell);
-        
+
         if (Input.GetMouseButtonDown(0))
         {
             Select(highlightedCell);
@@ -144,7 +144,7 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-    
+
     private void Select(HexCell cell)
     {
         if (cell && Grid.selectedCell != cell)
@@ -159,14 +159,14 @@ public class GameManager : MonoBehaviour
 
         if  (Grid.selectedCell &&
             Grid.selectedCell.occupied &&
-            !Grid.selectedCell.occupier.isMoving &&
+            !Grid.selectedCell.occupier.IsMoving &&
             Grid.selectedCell.occupier.canAct &&
-            units[actingTeam, roundPhase].Contains(Grid.selectedCell.occupier)) 
+            units[actingTeam, roundPhase].Contains(Grid.selectedCell.occupier))
         {
             bool acted = false;
 
             if (targetCell.occupied &&
-                !targetCell.occupier.isMoving &&
+                !targetCell.occupier.IsMoving &&
                 (targetCell.hex.DistanceTo(Grid.selectedCell.hex) <= Grid.selectedCell.occupier.stats.move))
             {
                 acted = targetCell.ResolveActBy(Grid.selectedCell.occupier);
@@ -182,18 +182,29 @@ public class GameManager : MonoBehaviour
 
     private void PlayRoundZero()
     {
-        // init constants        
+        // init constants
         round = 0;
 
+        StartCoroutine(SpawnTestUnits());
+    }
+
+    private IEnumerator SpawnTestUnits()
+    {
         // spawn blue team
         SpawnUnitAt(sphereUnit, new Hex(-3, 0), 0);
+        yield return new WaitForSeconds(1);
         SpawnUnitAt(sphericalFlyerUnit, new Hex(-3, 2), 0);
+        yield return new WaitForSeconds(1);
         SpawnUnitAt(cubeUnit, new Hex(-5, 2), 0);
+        yield return new WaitForSeconds(1);
 
         // spawn red team
         SpawnUnitAt(sphereUnit, new Hex(3, 0), 1);
+        yield return new WaitForSeconds(1);
         SpawnUnitAt(sphericalFlyerUnit, new Hex(3, 2), 1);
+        yield return new WaitForSeconds(1);
         SpawnUnitAt(cubeUnit, new Hex(5, 2), 1);
+        yield return new WaitForSeconds(1);
 
         EndRound();
     }
