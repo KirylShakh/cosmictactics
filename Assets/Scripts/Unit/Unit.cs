@@ -12,6 +12,9 @@ abstract public class Unit : MonoBehaviour
     public List<BaseUnitStatus> activeStatuses;
 
     public bool IsMoving = false;
+    public bool IsAttacking = false;
+    public bool IsTargetDying = false;
+
     public float velocity = 10.0f;
     private List<HexCell> movePath;
     private int pathCellIndex = 0;
@@ -32,6 +35,9 @@ abstract public class Unit : MonoBehaviour
 
     public delegate void UnitDestroyed(Unit unit);
     public event UnitDestroyed UnitDestroyedEvent;
+
+    public delegate void ActionFinished(Unit unit);
+    public event ActionFinished ActionFinishedEvent;
 
     // Use this for initialization
     void Start()
@@ -71,19 +77,9 @@ abstract public class Unit : MonoBehaviour
         hex = cell.hex;
     }
 
-    public void MoveTo(HexCell cell)
+    public void Die(Unit from)
     {
-        Vector3 cellPos = cell.transform.position;
-        transform.parent.position = new Vector3(cellPos.x, cellPos.y, cellPos.z);
-        hex = cell.hex;
-    }
-
-    public virtual void ActOn(Unit unit)
-    {
-        unit.UnitDestroyedEvent(unit);
-        Destroy(unit.gameObject, 0.0f);
-
-        canAct = false;
+        animator.SetBool("IsDying", true);
     }
 
     public void ApplyStatus(BaseUnitStatus status)
@@ -93,36 +89,74 @@ abstract public class Unit : MonoBehaviour
         if (modStats.move != -1) {}
     }
 
-    public virtual void MoveAlong(List<HexCell> path)
+    // Animation Event Handler for a moment in animation when actual "hit" is played
+    public void AnimationStrikeApplied()
+    {
+        var targetUnit = movePath[pathCellIndex].occupier;
+        targetUnit.UnitDestroyedEvent += OnUnitKilled;
+        targetUnit.Die(this);
+
+        IsTargetDying = true;
+    }
+
+    // Animation Event Handler when attack animation finishes its cycle
+    public void AnimationAttackCompleted()
+    {
+        IsAttacking = false;
+        animator.SetBool("IsAttacking", false);
+    }
+
+    // Animation Event Handler when dying animation finishes its cycle
+    public void AnimationDyingCompleted()
+    {
+        UnitDestroyedEvent(this);
+
+        Destroy(transform.parent.gameObject, 0.0f);
+        Destroy(gameObject, 0.0f);
+    }
+
+    private void OnUnitKilled(Unit unit)
+    {
+        IsTargetDying = false;
+        unit.UnitDestroyedEvent -= OnUnitKilled;
+    }
+
+    // Method for both "move and attack" and "move" actions
+    public void MoveAction(List<HexCell> pathToTarget)
     {
         IsMoving = true;
         animator.SetBool("IsMoving", true);
-        movePath = path;
-        pathCellIndex = 1;
 
-        foreach (HexCell step in path)
-        {
-            step.Occupy(this);
-        }
-        movePath[0].UnitLeaves();
+        movePath = pathToTarget;
+        pathCellIndex = 1;
 
         canAct = false;
     }
 
     protected void RecalculateMovement()
     {
-        if ((pathCellIndex >= movePath.Count - 1) && IsNearCell(movePath[pathCellIndex]))
+        if (IsDestinationReached())
         {
-            MoveTo(movePath[pathCellIndex]);
+            transform.parent.position = movePath[pathCellIndex].transform.position;
+            hex = movePath[pathCellIndex].hex;
+            OccupyNextCell();
+
             IsMoving = false;
             animator.SetBool("IsMoving", false);
+            ActionFinishedEvent(this);
         }
-        else
+        else if (IsReadyToAttack())
+        {
+            OccupyNextCell();
+
+            IsAttacking = true;
+            animator.SetBool("IsAttacking", true);
+        }
+        else if (IsReadyToMove())
         {
             if (IsNearCell(movePath[pathCellIndex]))
             {
-                movePath[pathCellIndex].UnitLeaves();
-                pathCellIndex++;
+                OccupyNextCell();
             }
 
             Vector3 cellPos = movePath[pathCellIndex].transform.position;
@@ -135,9 +169,22 @@ abstract public class Unit : MonoBehaviour
         }
     }
 
+    protected bool IsDestinationReached() => (pathCellIndex >= movePath.Count - 1) && IsNearCell(movePath[pathCellIndex]);
+
+    protected bool IsReadyToAttack() => IsNearCell(movePath[pathCellIndex]) && movePath[pathCellIndex + 1].occupied;
+
+    protected bool IsReadyToMove() => !IsAttacking && !IsTargetDying;
+
     protected Vector3 DirectionTo(HexCell cell) => cell.transform.position - transform.parent.position;
 
     protected bool IsNearCell(HexCell cell) => DirectionTo(cell).magnitude <= movePrecision;
+
+    private void OccupyNextCell()
+    {
+        movePath[pathCellIndex - 1].UnitLeaves();
+        movePath[pathCellIndex].Occupy(this);
+        pathCellIndex++;
+    }
 
     public void ShowStats()
     {

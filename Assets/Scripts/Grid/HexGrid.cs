@@ -65,7 +65,7 @@ public class HexGrid : MonoBehaviour
         }
     }
 
-    public void SelectCell(Point p) => SelectCell(FindCell(p));
+    public void SelectCell(Hex hex) => SelectCell(FindCell(hex));
 
     public void SelectCell(HexCell cell)
     {
@@ -103,10 +103,16 @@ public class HexGrid : MonoBehaviour
         }
     }
 
-    public bool MoveSelectedUnitTo(HexCell destination)
+    public bool LaunchSelectedUnitAction(HexCell destination)
     {
         if (!destination || destination.occupied || selectedCell.occupier.IsMoving) return false;
 
+
+        return true;
+    }
+
+    public List<HexCell> GetPathToTarget(HexCell destination)
+    {
         List<HexCell> path;
         if (highlightedPath.Count < 2 || highlightedPath[highlightedPath.Count - 1] != destination)
         {
@@ -121,20 +127,8 @@ public class HexGrid : MonoBehaviour
         {
             path = new List<HexCell>(highlightedPath.ToArray());
         }
-
-        if (path.Count >= 2)
-        {
-            selectedCell.occupier.MoveAlong(path);
-            SelectCell(path[path.Count - 1]);
-        } else
-        {
-            SelectCell(destination);
-        }
-
-        return true;
+        return path;
     }
-
-    public void MoveSelectedUnitTo(Point p) => MoveSelectedUnitTo(FindCell(p));
 
     public HexCell FindCell(Point p) => FindCell(p.ToHex(layout));
 
@@ -241,15 +235,7 @@ public class HexGrid : MonoBehaviour
     {
         if (CanSpawn())
         {
-            var pos = selectedCell.transform.position;
-            var wrapper = new GameObject("Unit Wrapper");
-            wrapper.transform.position = new Vector3(pos.x, pos.y, pos.z);
-
-            var spawnedUnit = Instantiate(unit, new Vector3(0, 0, 0), Quaternion.identity);
-            spawnedUnit.transform.parent = wrapper.transform;
-            spawnedUnit.Setup(selectedCell);
-
-            selectedCell.Occupy(spawnedUnit);
+            var spawnedUnit = SpawnUnitAtCell(unit, selectedCell);
             selectedCell.occupier.ShowStats();
 
             ClearHighlighting();
@@ -262,23 +248,21 @@ public class HexGrid : MonoBehaviour
         return null;
     }
 
-    public Unit SpawnAt(Unit unit, Hex hex)
+    public Unit SpawnAt(Unit unit, Hex hex) => CanSpawnAt(hex) ? SpawnUnitAtCell(unit, cells[hex.ToString()]) : null;
+
+    private Unit SpawnUnitAtCell(Unit unit, HexCell cell)
     {
-        if (CanSpawnAt(hex))
-        {
-            var cell = cells[hex.ToString()];
-            var pos = cell.transform.position;
-            var wrapper = new GameObject("Unit Wrapper");
-            wrapper.transform.position = new Vector3(pos.x, pos.y, pos.z);
+        var pos = cell.transform.position;
 
-            var spawnedUnit = Instantiate(unit, new Vector3(0, 0, 0), Quaternion.identity);
-            spawnedUnit.transform.parent = wrapper.transform;
+        var wrapper = new GameObject("Unit Wrapper");
+        wrapper.transform.position = new Vector3(pos.x, pos.y, pos.z);
 
-            spawnedUnit.Setup(cell);
-            cell.Occupy(spawnedUnit);
+        var spawnedUnit = Instantiate(unit, new Vector3(0, 0, 0), Quaternion.identity);
+        spawnedUnit.transform.parent = wrapper.transform;
 
-            return spawnedUnit;
-        }
-        return null;
+        spawnedUnit.Setup(cell);
+        cell.Occupy(spawnedUnit);
+
+        return spawnedUnit;
     }
 }

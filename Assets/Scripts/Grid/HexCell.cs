@@ -70,23 +70,28 @@ public class HexCell : MonoBehaviour
     {
         occupier = unit;
         occupied = true;
+
+        occupier.UnitDestroyedEvent += OnUnitDestroyed;
     }
 
     public void UnitLeaves()
     {
+        occupier.UnitDestroyedEvent -= OnUnitDestroyed;
+
         occupier = null;
         occupied = false;
     }
 
-    public bool ResolveActBy(Unit unit)
+    private void OnUnitDestroyed(Unit unit)
     {
-        if (occupied && occupier != unit && !occupier.IsMoving)
+        if (unit == occupier)
         {
-            unit.ActOn(occupier);
             UnitLeaves();
-            return true;
         }
-        return false;
+        else
+        {
+            unit.UnitDestroyedEvent -= OnUnitDestroyed;
+        }
     }
 
     private Vector3[] HexCornerVertices()

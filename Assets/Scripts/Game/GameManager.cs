@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -45,6 +46,8 @@ public class GameManager : MonoBehaviour
     private readonly int[] teams = { 0, 1 };
     // units initiative classes, round is divided into phases, units take turns from both teams according to their initiatives
     private readonly int[] initiatives = { 0, 1, 2 };
+
+    private bool actionInProcess = false;
 
     void Start()
     {
@@ -155,29 +158,55 @@ public class GameManager : MonoBehaviour
 
     private void Act(HexCell targetCell)
     {
-        if (!targetCell) return;
+        if (actionInProcess || !targetCell || !IsThereValidActor()) return;
 
-        if  (Grid.selectedCell &&
-            Grid.selectedCell.occupied &&
-            !Grid.selectedCell.occupier.IsMoving &&
-            Grid.selectedCell.occupier.canAct &&
-            units[actingTeam, roundPhase].Contains(Grid.selectedCell.occupier))
+        var actingUnit = Grid.selectedCell.occupier;
+        var pathToTarget = Grid.GetPathToTarget(targetCell);
+
+        if (IsThereValidTarget(targetCell, pathToTarget) || IsThereValidMovePath(targetCell, pathToTarget))
         {
-            bool acted = false;
-
-            if (targetCell.occupied &&
-                !targetCell.occupier.IsMoving &&
-                (targetCell.hex.DistanceTo(Grid.selectedCell.hex) <= Grid.selectedCell.occupier.stats.move))
-            {
-                acted = targetCell.ResolveActBy(Grid.selectedCell.occupier);
-            }
-            bool moved = Grid.MoveSelectedUnitTo(targetCell);
-
-            if (acted || moved)
-            {
-                PassToNextTeam();
-            }
+            actingUnit.MoveAction(pathToTarget);
+            actionInProcess = true;
         }
+
+        if (actionInProcess)
+        {
+            actingUnit.ActionFinishedEvent += OnActionFinished;
+        }
+    }
+
+    private bool IsThereValidActor()
+    {
+        return Grid.selectedCell &&
+                Grid.selectedCell.occupied &&
+                !Grid.selectedCell.occupier.IsMoving &&
+                Grid.selectedCell.occupier.canAct &&
+                units[actingTeam, roundPhase].Contains(Grid.selectedCell.occupier);
+    }
+
+    private bool IsThereValidTarget(HexCell targetCell, List<HexCell> pathToTarget)
+    {
+        return targetCell != Grid.selectedCell &&
+                targetCell.occupied &&
+                !targetCell.occupier.IsMoving &&
+                pathToTarget.Last() == targetCell &&
+                targetCell.occupier != Grid.selectedCell.occupier;
+    }
+
+    private bool IsThereValidMovePath(HexCell targetCell, List<HexCell> pathToTarget)
+    {
+        return targetCell != Grid.selectedCell &&
+                !targetCell.occupied &&
+                pathToTarget.Count > 0;
+    }
+
+    private void OnActionFinished(Unit unit)
+    {
+        actionInProcess = false;
+        unit.ActionFinishedEvent -= OnActionFinished;
+
+        Grid.SelectCell(unit.hex);
+        PassToNextTeam();
     }
 
     private void PlayRoundZero()
@@ -409,5 +438,7 @@ public class Units
         {
             units.Remove(team);
         }
+
+        unit.UnitDestroyedEvent -= OnUnitDestroyed;
     }
 }
