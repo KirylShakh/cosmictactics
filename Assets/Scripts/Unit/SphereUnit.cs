@@ -7,7 +7,7 @@ public class SphereUnit : Unit
 {
     public override string Name
     {
-        get { return "Sphere Name"; }
+        get { return "Sphere"; }
     }
 
     private Stats _stats;
@@ -19,6 +19,6 @@ public class SphereUnit : Unit
     public override void Setup(HexCell cell)
     {
         base.Setup(cell);
-        _stats = new Stats(11, 1);
+        _stats = new Stats(4, 1);
     }
 }

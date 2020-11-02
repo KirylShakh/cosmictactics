@@ -7,9 +7,8 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    // texts
-    public Text roundText;
-    public Text roundPhaseText;
+    // UI
+    public HUDPanelManager HUDManager;
 
     // base classes for units that can be spawn in this game
     public Unit sphereUnit;
@@ -24,10 +23,10 @@ public class GameManager : MonoBehaviour
     // delay between rounds
     public float switchingRoundsDelay = 2.0f;
 
-    private HexGrid Grid { get; set; }
+    public HexGrid Grid;
 
     // collection for units that were spawned on current map
-    private Units units;
+    private Units units = new Units();
 
     // current round
     private int round;
@@ -40,7 +39,7 @@ public class GameManager : MonoBehaviour
     // delta for delay between rounds
     private float switchingRoundsDeltaTime;
     // flag when map conflict is resolved
-    private bool fightEnded;
+    private bool fightEnded = false;
 
     // teams ids
     private readonly int[] teams = { 0, 1 };
@@ -48,12 +47,11 @@ public class GameManager : MonoBehaviour
     private readonly int[] initiatives = { 0, 1, 2 };
 
     private bool actionInProcess = false;
+    private bool paused = true;
 
     void Start()
     {
-        units = new Units();
-        fightEnded = false;
-        Grid = GameObject.FindWithTag("HexGrid")?.GetComponent<HexGrid>();
+        HandleMainMenu();
         // init constants, spawn armies, start first round
         PlayRoundZero();
     }
@@ -74,16 +72,32 @@ public class GameManager : MonoBehaviour
 
     private void HandleInput()
     {
-        if (switchingRounds || fightEnded) return;
+        // Opening menu should be always possible
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            HandleMainMenu();
+        }
 
+        // If game paused (menu is opened) allow nothing more
+        if (paused) return;
+
+        // Highligtning cell should be possible always if menu is not opened
         HexCell highlightedCell = FindHighlightedCell();
         HandleHighlighting(highlightedCell);
 
+        // If switching round pause is in effect - process no more events
+        if (switchingRounds) return;
+
+        // Selection of the cell should be possible if no menu is opened or change raund is in effect
         if (Input.GetMouseButtonDown(0))
         {
             Select(highlightedCell);
         }
-        else if (Input.GetButton("Fire2"))
+
+        // If fight has ended - dont allow any more actions
+        if (fightEnded) return;
+
+        if (Input.GetButton("Fire2"))
         {
             Act(highlightedCell);
         }
@@ -107,6 +121,13 @@ public class GameManager : MonoBehaviour
                 Grid.ClearHighlighting();
             }
         }
+    }
+
+    private void HandleMainMenu()
+    {
+        paused = !paused;
+        HUDManager.ToggleMainMenu(paused);
+        Time.timeScale = paused ? 0.0f : 1.0f;
     }
 
     private HexCell FindHighlightedCell()
@@ -221,19 +242,19 @@ public class GameManager : MonoBehaviour
     {
         // spawn blue team
         SpawnUnitAt(sphereUnit, new Hex(-3, 0), 0);
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.5f);
         SpawnUnitAt(sphericalFlyerUnit, new Hex(-3, 2), 0);
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.5f);
         SpawnUnitAt(cubeUnit, new Hex(-5, 2), 0);
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.5f);
 
         // spawn red team
         SpawnUnitAt(sphereUnit, new Hex(3, 0), 1);
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.5f);
         SpawnUnitAt(sphericalFlyerUnit, new Hex(3, 2), 1);
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.5f);
         SpawnUnitAt(cubeUnit, new Hex(5, 2), 1);
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.5f);
 
         EndRound();
     }
@@ -252,8 +273,8 @@ public class GameManager : MonoBehaviour
     {
         if (units.OnlySingleTeamRemains() || units.NoTeamsRemains())
         {
-            roundText.text = "Fight Ended";
-            roundText.enabled = true;
+            int winningTeam = units.NoTeamsRemains() ? -1 : units.FirstTeam();
+            HUDManager.FightEnded(winningTeam);
             return true;
         }
         return false;
@@ -264,8 +285,7 @@ public class GameManager : MonoBehaviour
         switchingRounds = true;
 
         round++;
-        roundText.text = "Round " + round.ToString();
-        roundText.enabled = true;
+        HUDManager.NextRound(round);
 
         switchingRoundsDeltaTime = 0.0f;
     }
@@ -274,13 +294,13 @@ public class GameManager : MonoBehaviour
     {
         units.Map("RoundStarts");
 
-        roundText.enabled = false;
+        HUDManager.StartRound();
         switchingRounds = false;
 
         roundPhase = 0;
         ResetActedTeams();
 
-        UpdateRoundText();
+        HUDManager.UpdatePhaseInfo(actingTeam, round, roundPhase);
     }
 
     private void NextPhase()
@@ -297,7 +317,7 @@ public class GameManager : MonoBehaviour
             {
                 NextPhase();
             }
-            UpdateRoundText();
+            HUDManager.UpdatePhaseInfo(actingTeam, round, roundPhase);
         }
     }
 
@@ -333,7 +353,7 @@ public class GameManager : MonoBehaviour
         units.Map(actingTeam, roundPhase, "OnActivate");
         Grid.ManageHighlightActivated(units[actingTeam, roundPhase]);
 
-        UpdateRoundText();
+        HUDManager.UpdatePhaseInfo(actingTeam, round, roundPhase);
     }
 
     private void NextTeam() => actingTeam = (actingTeam + 1 < teams.Length) ? actingTeam + 1 : 0;
@@ -345,15 +365,6 @@ public class GameManager : MonoBehaviour
             if (!units.AllActed(team, roundPhase)) return false;
         }
         return true;
-    }
-
-    private void UpdateRoundText()
-    {
-        string team = actingTeam == 0 ? "Blue(0)" : "Red(1)";
-        roundPhaseText.color = actingTeam == 0 ? Color.blue : Color.red;
-
-        string roundPhaseStr = roundPhase == 0 ? "Light(0)" : (roundPhase == 1 ? "Medium(1)" : "Heavy(2)");
-        roundPhaseText.text = $"Round {round}. Phase {roundPhaseStr}. Acting team {team}";
     }
 }
 
@@ -422,6 +433,8 @@ public class Units
     public bool OnlySingleTeamRemains() => units.Keys.Count == 1;
 
     public bool NoTeamsRemains() => units.Keys.Count == 0;
+
+    public int FirstTeam() => units.Keys.First();
 
     private void OnUnitDestroyed(Unit unit)
     {

@@ -1,13 +1,11 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 
 abstract public class Unit : MonoBehaviour
 {
     abstract public string Name { get; }
     abstract public Stats stats { get; }
-    private Text statsUI;
 
     public List<BaseUnitStatus> activeStatuses;
 
@@ -186,37 +184,9 @@ abstract public class Unit : MonoBehaviour
         pathCellIndex++;
     }
 
-    public void ShowStats()
-    {
-        Text _statsUI = FindStatsUIComponent();
-        if (_statsUI)
-        {
-            _statsUI.text = Name;
-            _statsUI.enabled = true;
-        }
-    }
-
-    public void HideStats()
-    {
-        Text _statsUI = FindStatsUIComponent();
-        if (_statsUI)
-        {
-            _statsUI.enabled = false;
-        }
-    }
-
     public void SetTeam(int _team, Material material) {
         team = _team;
         teamMaterial = material;
-    }
-
-    private Text FindStatsUIComponent()
-    {
-        if (!statsUI)
-        {
-            statsUI = GameObject.FindGameObjectWithTag("Name text")?.GetComponent<Text>();
-        }
-        return statsUI;
     }
 }
 

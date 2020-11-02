@@ -5,7 +5,7 @@ public class CubeUnit : Unit
 {
     public override string Name
     {
-        get { return "Cube Name"; }
+        get { return "Cube"; }
     }
 
     private Stats _stats;
@@ -17,6 +17,6 @@ public class CubeUnit : Unit
     public override void Setup(HexCell cell)
     {
         base.Setup(cell);
-        _stats = new Stats(9, 2);
+        _stats = new Stats(2, 2);
     }
 }

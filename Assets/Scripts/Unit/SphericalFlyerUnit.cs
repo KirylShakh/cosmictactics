@@ -5,7 +5,7 @@ public class SphericalFlyerUnit : Unit
 {
     public override string Name
     {
-        get { return "SphericalFlyerUnit Name"; }
+        get { return "Spherical Flyer"; }
     }
 
     private Stats _stats;
@@ -17,7 +17,7 @@ public class SphericalFlyerUnit : Unit
     public override void Setup(HexCell cell)
     {
         base.Setup(cell);
-        _stats = new Stats(13, 0);
+        _stats = new Stats(6, 0);
 
         needChangeDirectionDuringMove = true;
     }

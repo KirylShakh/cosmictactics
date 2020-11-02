@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class HexGrid : MonoBehaviour
 {
+    public HUDPanelManager HUDManager;
+
     public int gridXSize = 2;
     public int gridYSize = 2;
     public HexCell hexCell;
@@ -12,6 +14,8 @@ public class HexGrid : MonoBehaviour
     public IDictionary<string, HexCell> cells = new Dictionary<string, HexCell>();
     public HexCell selectedCell;
     public HexCell highlightedCell;
+
+    public GameObject unitsGameObject;
 
     private List<HexCell> highlightedPath = new List<HexCell>();
 
@@ -76,7 +80,11 @@ public class HexGrid : MonoBehaviour
             selectedCell.ClearHighlighting();
             if (selectedCell.occupied)
             {
-                selectedCell.occupier.HideStats();
+                HUDManager.ShowSelectedUnit(selectedCell.occupier);
+            }
+            else
+            {
+                HUDManager.HideSelectedUnit();
             }
 
         }
@@ -89,7 +97,11 @@ public class HexGrid : MonoBehaviour
 
             if (selectedCell.occupied)
             {
-                selectedCell.occupier.ShowStats();
+                HUDManager.ShowSelectedUnit(selectedCell.occupier);
+            }
+            else
+            {
+                HUDManager.HideSelectedUnit();
             }
         }
     }
@@ -199,6 +211,7 @@ public class HexGrid : MonoBehaviour
                 var p = hex.ToPoint(layout);
 
                 var cell = Instantiate(hexCell, new Vector3(p.x, 0.1f, p.y), Quaternion.identity);
+                cell.transform.SetParent(transform);
                 cell.Init(layout, p, hex);
 
                 cells.Add(hex.ToString(), cell);
@@ -236,7 +249,7 @@ public class HexGrid : MonoBehaviour
         if (CanSpawn())
         {
             var spawnedUnit = SpawnUnitAtCell(unit, selectedCell);
-            selectedCell.occupier.ShowStats();
+            HUDManager.ShowSelectedUnit(selectedCell.occupier);
 
             ClearHighlighting();
             if (highlightedCell)
@@ -256,9 +269,10 @@ public class HexGrid : MonoBehaviour
 
         var wrapper = new GameObject("Unit Wrapper");
         wrapper.transform.position = new Vector3(pos.x, pos.y, pos.z);
+        wrapper.transform.SetParent(unitsGameObject.transform);
 
         var spawnedUnit = Instantiate(unit, new Vector3(0, 0, 0), Quaternion.identity);
-        spawnedUnit.transform.parent = wrapper.transform;
+        spawnedUnit.transform.SetParent(wrapper.transform);
 
         spawnedUnit.Setup(cell);
         cell.Occupy(spawnedUnit);

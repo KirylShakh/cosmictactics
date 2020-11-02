@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class HexCell : MonoBehaviour
 {
-
     public Layout gridLayout;
     public float floorY = 0.1f;
     public Point point;
@@ -38,6 +37,8 @@ public class HexCell : MonoBehaviour
 
     public void Highlight()
     {
+        if (lr == null) return;
+
         lr.material.color = Color.cyan;
         lr.widthMultiplier = defaultWidth * 2.5f;
     }
