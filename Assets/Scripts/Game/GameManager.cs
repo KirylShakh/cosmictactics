@@ -88,7 +88,7 @@ public class GameManager : MonoBehaviour
         // If switching round pause is in effect - process no more events
         if (switchingRounds) return;
 
-        // Selection of the cell should be possible if no menu is opened or change raund is in effect
+        // Selection of the cell should be possible if no menu is opened or change round is in effect
         if (Input.GetMouseButtonDown(0))
         {
             Select(highlightedCell);

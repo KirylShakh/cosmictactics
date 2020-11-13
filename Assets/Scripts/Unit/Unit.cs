@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 
@@ -126,7 +127,11 @@ abstract public class Unit : MonoBehaviour
         animator.SetBool("IsMoving", true);
 
         movePath = pathToTarget;
-        pathCellIndex = 1;
+        pathCellIndex = 0; // Unit should proceed to attacking if it's target is adjacent to it
+        if (!IsReadyToAttack())
+        {
+            pathCellIndex += 1;
+        }
 
         canAct = false;
     }
@@ -145,7 +150,14 @@ abstract public class Unit : MonoBehaviour
         }
         else if (IsReadyToAttack())
         {
-            OccupyNextCell();
+            if (pathCellIndex != 0)
+            {
+                OccupyNextCell();
+            }
+            else
+            {
+                pathCellIndex += 1;
+            }
 
             IsAttacking = true;
             animator.SetBool("IsAttacking", true);
